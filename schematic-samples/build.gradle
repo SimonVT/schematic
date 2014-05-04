@@ -1,0 +1,59 @@
+apply plugin: 'android'
+apply plugin: 'checkstyle'
+apply plugin: 'android-apt'
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:0.10.+'
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.2'
+  }
+}
+
+dependencies {
+  apt project(':schematic-compiler')
+  compile project(':schematic')
+}
+
+apt {
+  arguments {
+    schematicOutPackage 'net.simonvt.schematic.samples.provider'
+  }
+}
+
+android {
+  compileSdkVersion parent.ext.compileSdkVersion
+  buildToolsVersion parent.ext.buildToolsVersion
+
+  defaultConfig {
+    minSdkVersion = parent.ext.minSdkVersion
+    targetSdkVersion = parent.ext.targetSdkVersion
+
+    versionCode = parent.ext.versionCode;
+    versionName = parent.ext.versionName
+  }
+
+  packagingOptions {
+    exclude 'META-INF/services/javax.annotation.processing.Processor'
+  }
+}
+
+checkstyle {
+  configFile project.file('../config/checkstyle/checkstyle.xml')
+  showViolations true
+}
+
+android.applicationVariants.all { variant ->
+  def name = variant.buildType.name
+
+  def checkstyle = project.tasks.create "checkstyle${name.capitalize()}", Checkstyle
+  checkstyle.dependsOn variant.javaCompile
+  checkstyle.source variant.javaCompile.source
+  checkstyle.classpath = project.fileTree(variant.javaCompile.destinationDir)
+  checkstyle.exclude('**/BuildConfig.java')
+  checkstyle.exclude('**/R.java')
+  project.tasks.getByName("check").dependsOn checkstyle
+}

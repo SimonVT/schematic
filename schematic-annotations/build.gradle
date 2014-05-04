@@ -1,0 +1,9 @@
+apply plugin: 'java'
+apply plugin: 'checkstyle'
+
+checkstyle {
+  configFile project.file('../config/checkstyle/checkstyle.xml')
+  showViolations true
+}
+
+apply from: '/Users/simonvt/dev/gradle-mvn-push/gradle-mvn-push.gradle'

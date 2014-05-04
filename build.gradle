@@ -1,0 +1,24 @@
+allprojects {
+  repositories {
+    mavenCentral()
+  }
+
+  tasks.withType(Compile) {
+    options.encoding = "UTF-8"
+  }
+}
+
+ext {
+  versionCode = 1
+  versionName = '1.0.0'
+
+  minSdkVersion = 16
+  targetSdkVersion = 19
+
+  compileSdkVersion = 19
+  buildToolsVersion = '19.0.1'
+}
+
+ext.libraries = [
+  javawriter: 'com.squareup:javawriter:2.4.0',
+]
