@@ -11,4 +11,4 @@ checkstyle {
   showViolations true
 }
 
-apply from: '/Users/simonvt/dev/gradle-mvn-push/gradle-mvn-push.gradle'
+apply from: 'https://github.com/SimonVT/gradle-mvn-push/blob/0.10/gradle-mvn-push.gradle'
