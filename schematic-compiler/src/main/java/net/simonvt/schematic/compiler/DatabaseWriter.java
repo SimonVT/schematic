@@ -173,16 +173,18 @@ public class DatabaseWriter {
 
     writer.endMethod().emitEmptyLine();
 
+    writer.emitAnnotation(Override.class)
+        .beginMethod("void", "onUpgrade", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db",
+            "int", "oldVersion", "int", "newVersion");
+
     if (onUpgrade != null) {
-      writer.emitAnnotation(Override.class)
-          .beginMethod("void", "onUpgrade", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db",
-              "int", "oldVersion", "int", "newVersion");
       String parent = ((TypeElement) onUpgrade.getEnclosingElement()).getQualifiedName().toString();
       String methodName = onUpgrade.getSimpleName().toString();
-      writer.emitStatement("%s.%s(db, oldVersion, newVersion)", parent, methodName).endMethod();
+      writer.emitStatement("%s.%s(db, oldVersion, newVersion)", parent, methodName);
     }
-    writer.endType();
-    writer.close();
+    writer.endMethod();
+
+    writer.endType().close();
   }
 
   private String getFileName() {
