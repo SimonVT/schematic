@@ -1,6 +1,9 @@
 apply plugin: 'java'
 apply plugin: 'checkstyle'
 
+targetCompatibility = JavaVersion.VERSION_1_7
+sourceCompatibility = JavaVersion.VERSION_1_7
+
 dependencies {
   compile project(':schematic-annotations')
   compile parent.ext.libraries.javawriter
