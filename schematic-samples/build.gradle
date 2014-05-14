@@ -16,11 +16,13 @@ buildscript {
 dependencies {
   apt project(':schematic-compiler')
   compile project(':schematic')
+  compile libraries.supportv4
+  compile libraries.butterknife
 }
 
 apt {
   arguments {
-    schematicOutPackage 'net.simonvt.schematic.samples.provider'
+    schematicOutPackage 'net.simonvt.schematic.sample.provider'
   }
 }
 

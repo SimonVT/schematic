@@ -21,4 +21,8 @@ ext {
 
 ext.libraries = [
   javawriter: 'com.squareup:javawriter:2.4.0',
+
+  supportv4: 'com.android.support:support-v4:19.1.+',
+
+  butterknife: 'com.jakewharton:butterknife:4.0.1'
 ]

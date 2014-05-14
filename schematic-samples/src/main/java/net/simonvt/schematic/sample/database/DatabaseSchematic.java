@@ -14,14 +14,21 @@
  * limitations under the License.
  */
 
-package net.simonvt.schematic.samples;
+package net.simonvt.schematic.sample.database;
 
-import android.app.Activity;
-import android.os.Bundle;
+import net.simonvt.schematic.annotation.Database;
+import net.simonvt.schematic.annotation.Table;
+import net.simonvt.schematic.annotation.Version;
 
-public class SampleActivity extends Activity {
+@Database(className = "NotesDatabase", fileName = "notesDatabase.db")
+public final class DatabaseSchematic {
 
-  @Override protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+  private DatabaseSchematic() {
   }
+
+  @Version public static final int VERSION = 1;
+
+  @Table(ListColumns.class) public static final String LISTS = "lists";
+
+  @Table(NoteColumns.class) public static final String NOTES = "notes";
 }

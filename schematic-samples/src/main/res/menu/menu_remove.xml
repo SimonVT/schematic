@@ -14,22 +14,11 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-<resources>
-
-  <string name="app_name">Schematic</string>
-
-  <string name="new_list">New list</string>
-  <string name="create_list">Create list</string>
-  <string name="cancel">Cancel</string>
-  <string name="add_list">Add list</string>
-  <string name="add_note">Add note</string>
-  <string name="update">Update</string>
-  <string name="insert">Insert</string>
-  <string name="list_name">List name</string>
-  <string name="remove">Remove</string>
-
-  <string name="x_notes">%d notes</string>
-  <string name="type_note">Type note</string>
-
-</resources>
+  <item
+      android:id="@+id/remove"
+      android:showAsAction="always"
+      android:icon="@drawable/ic_action_cancel"
+      android:title="@string/remove"/>
+</menu>

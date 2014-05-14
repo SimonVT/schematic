@@ -14,22 +14,20 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-<resources>
-
-  <string name="app_name">Schematic</string>
-
-  <string name="new_list">New list</string>
-  <string name="create_list">Create list</string>
-  <string name="cancel">Cancel</string>
-  <string name="add_list">Add list</string>
-  <string name="add_note">Add note</string>
-  <string name="update">Update</string>
-  <string name="insert">Insert</string>
-  <string name="list_name">List name</string>
-  <string name="remove">Remove</string>
-
-  <string name="x_notes">%d notes</string>
-  <string name="type_note">Type note</string>
-
-</resources>
+  <TextView
+      android:id="@+id/note"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:paddingLeft="16dp"
+      android:paddingTop="16dp"
+      android:paddingRight="16dp"
+      android:paddingBottom="16dp"
+      android:textAppearance="?android:attr/textAppearanceMedium"
+      tools:text="This is a note"/>
+</LinearLayout>

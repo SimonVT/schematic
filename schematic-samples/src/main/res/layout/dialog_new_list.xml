@@ -14,22 +14,19 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-<resources>
-
-  <string name="app_name">Schematic</string>
-
-  <string name="new_list">New list</string>
-  <string name="create_list">Create list</string>
-  <string name="cancel">Cancel</string>
-  <string name="add_list">Add list</string>
-  <string name="add_note">Add note</string>
-  <string name="update">Update</string>
-  <string name="insert">Insert</string>
-  <string name="list_name">List name</string>
-  <string name="remove">Remove</string>
-
-  <string name="x_notes">%d notes</string>
-  <string name="type_note">Type note</string>
-
-</resources>
+  <EditText
+      android:id="@+id/listName"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="8dp"
+      android:layout_marginLeft="8dp"
+      android:layout_marginRight="8dp"
+      android:imeOptions="actionDone"
+      android:inputType="text"
+      android:hint="@string/list_name"/>
+</LinearLayout>

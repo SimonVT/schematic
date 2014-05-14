@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-package net.simonvt.schematic.samples.database;
+package net.simonvt.schematic.sample.database;
 
+import net.simonvt.schematic.annotation.AutoIncrement;
 import net.simonvt.schematic.annotation.DataType;
-import net.simonvt.schematic.annotation.References;
+import net.simonvt.schematic.annotation.NotNull;
+import net.simonvt.schematic.annotation.PrimaryKey;
 
 import static net.simonvt.schematic.annotation.DataType.Type.INTEGER;
 import static net.simonvt.schematic.annotation.DataType.Type.TEXT;
 
-public class MoreData {
+public interface ListColumns {
 
-  @DataType(INTEGER) public static final String _ID = "_id";
+  @DataType(INTEGER) @PrimaryKey @AutoIncrement String _ID = "_id";
 
-  @DataType(INTEGER) @References(table = MyDatabase.DATA, column = DataColumns._ID)
-  public static final String REF = "ref";
+  @DataType(TEXT) @NotNull String TITLE = "title";
 
-  @DataType(TEXT) public static final String TITLE = "moreTitles";
-
-  @DataType(TEXT) public static final String SUBTITLE = "moreSubtitles";
+  String NOTES = "notes";
 }
