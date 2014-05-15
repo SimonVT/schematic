@@ -30,4 +30,6 @@ public @interface Database {
   String className();
 
   String fileName();
+
+  int version();
 }

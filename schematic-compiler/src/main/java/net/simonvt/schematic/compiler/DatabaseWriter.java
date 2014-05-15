@@ -35,7 +35,6 @@ import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.ExecOnCreate;
 import net.simonvt.schematic.annotation.OnUpgrade;
 import net.simonvt.schematic.annotation.Table;
-import net.simonvt.schematic.annotation.Version;
 
 public class DatabaseWriter {
 
@@ -52,7 +51,7 @@ public class DatabaseWriter {
 
   Element onUpgrade;
 
-  private String version;
+  int version;
 
   String outPackage;
 
@@ -65,6 +64,7 @@ public class DatabaseWriter {
     Database db = database.getAnnotation(Database.class);
     this.className = db.className();
     this.fileName = db.fileName();
+    this.version = db.version();
 
     List<? extends Element> enclosedElements = database.getEnclosedElements();
     for (Element enclosedElement : enclosedElements) {
@@ -80,12 +80,6 @@ public class DatabaseWriter {
         }
 
         this.onUpgrade = enclosedElement;
-      }
-
-      Version version = enclosedElement.getAnnotation(Version.class);
-      if (version != null) {
-        // TODO: Error if version already set. At end, error if no version is set
-        this.version = ((VariableElement) enclosedElement).getConstantValue().toString();
       }
 
       ExecOnCreate execOnCreate = enclosedElement.getAnnotation(ExecOnCreate.class);
@@ -128,7 +122,8 @@ public class DatabaseWriter {
         .emitEmptyLine();
 
     writer.emitField("int", "DATABASE_VERSION",
-        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL), version).emitEmptyLine();
+        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL), String.valueOf(version))
+        .emitEmptyLine();
 
     for (VariableElement table : tables) {
       TableWriter tableWriter = new TableWriter(processingEnv, table);

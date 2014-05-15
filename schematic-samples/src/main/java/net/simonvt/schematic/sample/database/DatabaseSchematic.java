@@ -18,15 +18,15 @@ package net.simonvt.schematic.sample.database;
 
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.Table;
-import net.simonvt.schematic.annotation.Version;
 
-@Database(className = "NotesDatabase", fileName = "notesDatabase.db")
+@Database(className = "NotesDatabase", fileName = "notesDatabase.db",
+    version = DatabaseSchematic.VERSION)
 public final class DatabaseSchematic {
 
   private DatabaseSchematic() {
   }
 
-  @Version public static final int VERSION = 1;
+  public static final int VERSION = 1;
 
   @Table(ListColumns.class) public static final String LISTS = "lists";
 
