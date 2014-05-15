@@ -15,6 +15,7 @@
  */
 package net.simonvt.schematic.compiler;
 
+import com.google.common.base.CaseFormat;
 import com.squareup.javawriter.JavaWriter;
 import java.io.IOException;
 import java.io.Writer;
@@ -61,10 +62,21 @@ public class DatabaseWriter {
 
     this.outPackage = outPackage;
 
+    String databaseSchematicName = database.getSimpleName().toString();
+
     Database db = database.getAnnotation(Database.class);
-    this.className = db.className();
-    this.fileName = db.fileName();
     this.version = db.version();
+
+    this.className = db.className();
+    if (className.trim().isEmpty()) {
+      this.className = databaseSchematicName;
+    }
+
+    this.fileName = db.fileName();
+    if (fileName.trim().isEmpty()) {
+      this.fileName =
+          CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, databaseSchematicName) + ".db";
+    }
 
     List<? extends Element> enclosedElements = database.getEnclosedElements();
     for (Element enclosedElement : enclosedElements) {

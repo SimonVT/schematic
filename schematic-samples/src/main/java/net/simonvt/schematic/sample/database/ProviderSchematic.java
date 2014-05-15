@@ -32,7 +32,7 @@ import net.simonvt.schematic.annotation.NotifyUpdate;
 import net.simonvt.schematic.annotation.TableEndpoint;
 
 @ContentProvider(name = "NotesProvider", authority = ProviderSchematic.AUTHORITY,
-    database = DatabaseSchematic.class)
+    database = NotesDatabase.class)
 public final class ProviderSchematic {
 
   private ProviderSchematic() {
@@ -56,7 +56,7 @@ public final class ProviderSchematic {
     return builder.build();
   }
 
-  @TableEndpoint(table = DatabaseSchematic.LISTS) public static class Lists {
+  @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
 
     @MapColumns public static Map<String, String> mapColumns() {
       Map<String, String> map = new HashMap<String, String>();
@@ -83,19 +83,19 @@ public final class ProviderSchematic {
     }
 
     static final String LIST_COUNT = "(SELECT COUNT(*) FROM "
-        + DatabaseSchematic.NOTES
+        + NotesDatabase.NOTES
         + " WHERE "
-        + DatabaseSchematic.NOTES
+        + NotesDatabase.NOTES
         + "."
         + NoteColumns.LIST_ID
         + "="
-        + DatabaseSchematic.LISTS
+        + NotesDatabase.LISTS
         + "."
         + ListColumns._ID
         + ")";
   }
 
-  @TableEndpoint(table = DatabaseSchematic.NOTES) public static class Notes {
+  @TableEndpoint(table = NotesDatabase.NOTES) public static class Notes {
 
     @ContentUri(
         path = Path.NOTES,

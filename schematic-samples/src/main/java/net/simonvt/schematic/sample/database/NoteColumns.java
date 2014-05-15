@@ -28,7 +28,7 @@ public interface NoteColumns {
 
   @DataType(INTEGER) @PrimaryKey @AutoIncrement String _ID = "_id";
 
-  @DataType(INTEGER) @References(table = DatabaseSchematic.LISTS, column = ListColumns._ID) String
+  @DataType(INTEGER) @References(table = NotesDatabase.LISTS, column = ListColumns._ID) String
       LIST_ID = "listId";
 
   @DataType(TEXT) String NOTE = "note";

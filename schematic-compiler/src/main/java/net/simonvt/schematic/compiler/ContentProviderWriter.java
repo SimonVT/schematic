@@ -146,8 +146,12 @@ public class ContentProviderWriter {
     } catch (MirroredTypeException e) {
       TypeMirror mirror = e.getTypeMirror();
       this.database = processingEnv.getTypeUtils().asElement(mirror);
+      String databaseSchematicName = this.database.getSimpleName().toString();
       Database database = this.database.getAnnotation(Database.class);
       databaseName = database.className();
+      if (databaseName.trim().isEmpty()) {
+        this.databaseName = databaseSchematicName;
+      }
     }
 
     List<? extends Element> enclosedElements = provider.getEnclosedElements();

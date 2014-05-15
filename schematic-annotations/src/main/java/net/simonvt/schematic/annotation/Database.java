@@ -27,9 +27,9 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  */
 @Retention(CLASS) @Target(TYPE)
 public @interface Database {
-  String className();
+  String className() default "";
 
-  String fileName();
+  String fileName() default "";
 
   int version();
 }

@@ -19,11 +19,10 @@ package net.simonvt.schematic.sample.database;
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.Table;
 
-@Database(className = "NotesDatabase", fileName = "notesDatabase.db",
-    version = DatabaseSchematic.VERSION)
-public final class DatabaseSchematic {
+@Database(version = NotesDatabase.VERSION)
+public final class NotesDatabase {
 
-  private DatabaseSchematic() {
+  private NotesDatabase() {
   }
 
   public static final int VERSION = 1;

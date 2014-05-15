@@ -24,5 +24,7 @@ ext.libraries = [
 
   supportv4: 'com.android.support:support-v4:19.1.+',
 
-  butterknife: 'com.jakewharton:butterknife:4.0.1'
+  butterknife: 'com.jakewharton:butterknife:4.0.1',
+
+  guava: 'com.google.guava:guava:17.0'
 ]
