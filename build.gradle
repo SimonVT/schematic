@@ -16,7 +16,7 @@ ext {
   targetSdkVersion = 19
 
   compileSdkVersion = 19
-  buildToolsVersion = '19.0.1'
+  buildToolsVersion = '19.1.0'
 }
 
 ext.libraries = [
