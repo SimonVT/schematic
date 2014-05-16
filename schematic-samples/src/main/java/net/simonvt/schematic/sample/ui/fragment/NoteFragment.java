@@ -34,7 +34,7 @@ import butterknife.InjectView;
 import butterknife.OnClick;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
-import net.simonvt.schematic.sample.database.ProviderSchematic.Notes;
+import net.simonvt.schematic.sample.database.NotesProvider.Notes;
 
 public class NoteFragment extends Fragment {
 

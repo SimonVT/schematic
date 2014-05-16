@@ -28,7 +28,7 @@ import android.view.View;
 import android.widget.EditText;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.ListColumns;
-import net.simonvt.schematic.sample.database.ProviderSchematic.Lists;
+import net.simonvt.schematic.sample.database.NotesProvider.Lists;
 
 public class NewListDialog extends DialogFragment {
 

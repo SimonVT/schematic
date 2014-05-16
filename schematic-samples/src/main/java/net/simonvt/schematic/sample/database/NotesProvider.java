@@ -31,11 +31,10 @@ import net.simonvt.schematic.annotation.NotifyInsert;
 import net.simonvt.schematic.annotation.NotifyUpdate;
 import net.simonvt.schematic.annotation.TableEndpoint;
 
-@ContentProvider(name = "NotesProvider", authority = ProviderSchematic.AUTHORITY,
-    database = NotesDatabase.class)
-public final class ProviderSchematic {
+@ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
+public final class NotesProvider {
 
-  private ProviderSchematic() {
+  private NotesProvider() {
   }
 
   public static final String AUTHORITY = "net.simonvt.schematic.sample.NotesProvider";

@@ -33,7 +33,7 @@ import butterknife.InjectView;
 import butterknife.OnClick;
 import butterknife.OnItemClick;
 import net.simonvt.schematic.sample.R;
-import net.simonvt.schematic.sample.database.ProviderSchematic.Lists;
+import net.simonvt.schematic.sample.database.NotesProvider.Lists;
 import net.simonvt.schematic.sample.ui.adapter.ListsAdapter;
 import net.simonvt.schematic.sample.ui.dialog.NewListDialog;
 

@@ -137,8 +137,12 @@ public class ContentProviderWriter {
     descriptorPackage = getPackageName(elm);
 
     ContentProvider annotation = provider.getAnnotation(ContentProvider.class);
-    this.providerName = annotation.name();
     this.authority = annotation.authority();
+
+    this.providerName = annotation.name();
+    if (providerName.trim().isEmpty()) {
+      providerName = provider.getSimpleName().toString();
+    }
 
     // Get database name
     try {

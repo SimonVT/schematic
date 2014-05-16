@@ -27,7 +27,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  */
 @Retention(CLASS) @Target(TYPE)
 public @interface ContentProvider {
-  String name();
+  String name() default "";
   String authority();
   Class database();
 }

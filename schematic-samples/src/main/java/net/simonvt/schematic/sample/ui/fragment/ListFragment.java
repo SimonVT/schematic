@@ -38,8 +38,8 @@ import butterknife.OnClick;
 import butterknife.OnItemClick;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
-import net.simonvt.schematic.sample.database.ProviderSchematic.Lists;
-import net.simonvt.schematic.sample.database.ProviderSchematic.Notes;
+import net.simonvt.schematic.sample.database.NotesProvider.Lists;
+import net.simonvt.schematic.sample.database.NotesProvider.Notes;
 import net.simonvt.schematic.sample.ui.adapter.ListAdapter;
 
 public class ListFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor> {
