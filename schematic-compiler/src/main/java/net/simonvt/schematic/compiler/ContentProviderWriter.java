@@ -480,12 +480,30 @@ public class ContentProviderWriter {
         }
         whereBuilder.append(".where(selection, selectionArgs)\n");
 
-        Element where = whereCalls.get(uri.path);
+        ExecutableElement where = whereCalls.get(uri.path);
         if (where != null) {
           // TODO do for insert, update, delete
           String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
           String methodName = where.getSimpleName().toString();
-          writer.emitStatement("String[] wheres = %s.%s(uri)", parent, methodName);
+
+          List<? extends VariableElement> parameters = where.getParameters();
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+            TypeMirror paramType = param.asType();
+            String typeAsString = paramType.toString();
+            if ("android.net.Uri".equals(typeAsString)) {
+              params.append("uri");
+            }
+          }
+
+          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
+              params.toString());
           writer.beginControlFlow("for (String where : wheres)")
               .emitStatement("builder.where(where)")
               .endControlFlow();
