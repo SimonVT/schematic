@@ -587,12 +587,33 @@ public class ContentProviderWriter {
           writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
         }
 
-        Element insertUri = insertUris.get(uri.path);
+        ExecutableElement insertUri = insertUris.get(uri.path);
         if (insertUri != null) {
           String parent =
               ((TypeElement) insertUri.getEnclosingElement()).getQualifiedName().toString();
           String methodName = insertUri.getSimpleName().toString();
-          writer.emitStatement("return %s.%s(uri, values)", parent, methodName);
+
+          List<? extends VariableElement> parameters = insertUri.getParameters();
+
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+            TypeMirror paramType = param.asType();
+            String typeAsString = paramType.toString();
+
+            if ("android.net.Uri".equals(typeAsString)) {
+              params.append("uri");
+            }
+            if ("android.content.ContentValues".equals(typeAsString)) {
+              params.append("values");
+            }
+          }
+          writer.emitStatement("return %s.%s(%s)", parent, methodName, params.toString());
         } else {
           writer.emitStatement("return ContentUris.withAppendedId(uri, id)");
         }
