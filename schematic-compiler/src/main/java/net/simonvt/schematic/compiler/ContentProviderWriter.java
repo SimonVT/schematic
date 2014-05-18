@@ -790,7 +790,8 @@ public class ContentProviderWriter {
 
         boolean hasNotifyUris = false;
 
-        if (uri.path != null && notifyDelete.containsKey(uri.path)) {
+        if ((uri.path != null && notifyDelete.containsKey(uri.path))
+            || defaultNotifyDelete != null) {
           hasNotifyUris = true;
 
           ExecutableElement notifyMethod = notifyDelete.get(uri.path);
