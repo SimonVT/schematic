@@ -1,7 +1,63 @@
 Schematic
 =========
 
-Automatically generate ContentProviders
+Automatically generate a ContentProvider backed by an SQLite database.
+
+
+Usage
+=====
+
+First create a class that contains the columns of a database table.
+
+```java
+public interface ListColumns {
+
+  @DataType(INTEGER) @PrimaryKey @AutoIncrement String _ID = "_id";
+
+  @DataType(TEXT) @NotNull String TITLE = "title";
+}
+```
+
+
+Then create a database that uses this column
+
+```java
+@Database(version = NotesDatabase.VERSION)
+public final class NotesDatabase {
+
+  public static final int VERSION = 1;
+
+  @Table(ListColumns.class) public static final String LISTS = "lists";
+}
+```
+
+
+And finally define a ContentProvider
+
+```java
+@ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
+public final class NotesProvider {
+
+  public static final String AUTHORITY = "net.simonvt.schematic.sample.NotesProvider";
+
+  @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
+
+    @ContentUri(
+        path = Path.LISTS,
+        type = "vnd.android.cursor.dir/list",
+        defaultSort = ListColumns.TITLE + " ASC")
+    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists")
+  }
+```
+
+
+Including in your project
+=========================
+
+```
+compile 'net.simonvt.schematic:schematic:{latest.version}'
+```
+
 
 License
 =======
