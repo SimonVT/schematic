@@ -23,7 +23,11 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * Annotate a table name with the interface which contains the columns.
+ * Annotate a table name with the interface which contains the columns. This must be a string field
+ * inside a class annotated with {@link net.simonvt.schematic.annotation.Database}.
+ * <pre>{@code
+ * &#064;Table(ListColumns.class) public static final String LISTS = "lists";
+ * }</pre>
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface Table {

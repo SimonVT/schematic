@@ -23,11 +23,23 @@ import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * The class annotated describes a ContentProvider.
+ * The class annotated describes a ContentProvider. For each table in the database, add a {@link
+ * net.simonvt.schematic.annotation.TableEndpoint} annotation to an inner class.
+ * <pre>{@code
+ * &#064;ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
+ * public final class NotesProvider {
+ *
+ *   &#064;TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
+ *     ...
+ *   }
+ * }
+ * }</pre>
  */
 @Retention(CLASS) @Target(TYPE)
 public @interface ContentProvider {
   String name() default "";
+
   String authority();
+
   Class database();
 }

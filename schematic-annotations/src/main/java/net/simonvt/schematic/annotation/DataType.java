@@ -23,7 +23,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * The type of a SQLite column.
+ * The datatype of an SQLite column.
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface DataType {

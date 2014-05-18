@@ -23,7 +23,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * The default value for a database column.
+ * The default value of a database column.
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface DefaultValue {

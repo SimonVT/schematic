@@ -23,7 +23,15 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * A content URI is a URI that identifies data in a provider
+ * A content URI is a URI that identifies data in a provider. This has to be used inside a class
+ * annotated with {@link net.simonvt.schematic.annotation.TableEndpoint},
+ * <pre>{@code
+ * &#064;ContentUri(
+ *   path = "lists",
+ *   type = "vnd.android.cursor.dir/list",
+ *   defaultSort = ListColumns.TITLE + " ASC")
+ * public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
+ * }</pre>
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface ContentUri {

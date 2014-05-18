@@ -24,6 +24,17 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * An inexact content URI. Annotates the method used to construct the URI.
+ * <pre>{@code
+ * @InexactContentUri(
+ *   path = Path.LISTS + "/#",
+ *   name = "LIST_ID",
+ *   type = "vnd.android.cursor.item/list",
+ *   whereColumn = ListColumns._ID,
+ *   pathSegment = 1)
+ * public static Uri withId(long id) {
+ *   return Uri.parse("content://" + AUTHORITY + "/lists/" + id);
+ * }
+ * }</pre>
  */
 @Retention(CLASS) @Target(METHOD)
 public @interface InexactContentUri {

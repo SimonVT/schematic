@@ -24,6 +24,11 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * Method to be called when upgrading the database.
+ * <pre>{@code
+ * &#064;OnUpgrade public static void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+ *   ...
+ * }
+ * }</pre>
  */
 @Retention(CLASS) @Target(METHOD)
 public @interface OnUpgrade {

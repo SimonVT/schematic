@@ -22,6 +22,22 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
+/**
+ * Maps a column or subquery to another column.
+ * <pre>{@code
+ * &#064;MapColumns public static Map<String, String> mapColumns() {
+ *   Map<String, String> map = new HashMap<String, String>();
+ *   map.put(from, to);
+ *   return map;
+ * }
+ * }</pre>
+ *
+ * This is then inserted into the columns in the select statement:
+ *
+ * <pre>
+ * SELECT (to AS from) FROM table
+ * </pre>
+ */
 @Retention(CLASS) @Target(METHOD)
 public @interface MapColumns {
 }
