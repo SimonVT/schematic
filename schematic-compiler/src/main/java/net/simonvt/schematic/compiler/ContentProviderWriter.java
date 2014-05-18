@@ -301,7 +301,7 @@ public class ContentProviderWriter {
             String[] paths = notificationUri.paths();
             for (String path : paths) {
               if (notificationUris.containsKey(paths)) {
-                // TODO Error
+                error("Multiple NotificationUri's for path '" + path + "' defined");
               }
 
               notificationUris.put(path, element);
