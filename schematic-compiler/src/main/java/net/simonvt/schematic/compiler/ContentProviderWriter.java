@@ -482,7 +482,6 @@ public class ContentProviderWriter {
 
         ExecutableElement where = whereCalls.get(uri.path);
         if (where != null) {
-          // TODO do for insert, update, delete
           String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
           String methodName = where.getSimpleName().toString();
 
@@ -704,6 +703,9 @@ public class ContentProviderWriter {
               params.toString());
         }
 
+        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
+            uri.parent.getSimpleName().toString());
+
         StringBuilder whereBuilder = new StringBuilder();
         if (uri.contractType == UriContract.Type.INEXACT) {
           for (int i = 0; i < uri.whereColumns.length; i++) {
@@ -721,10 +723,36 @@ public class ContentProviderWriter {
         }
         whereBuilder.append(".where(where, whereArgs)\n");
 
-        writer.emitStatement(
-            "final int count = getBuilder(\"%s\").table(\"%s\")\n%s.update(db, values)",
-            uri.parent.getSimpleName().toString(), uri.table, whereBuilder.toString())
-            .beginControlFlow("if (count > 0)");
+        ExecutableElement where = whereCalls.get(uri.path);
+        if (where != null) {
+          String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
+          String methodName = where.getSimpleName().toString();
+
+          List<? extends VariableElement> parameters = where.getParameters();
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+            TypeMirror paramType = param.asType();
+            String typeAsString = paramType.toString();
+            if ("android.net.Uri".equals(typeAsString)) {
+              params.append("uri");
+            }
+          }
+
+          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
+              params.toString());
+          writer.beginControlFlow("for (String w : wheres)")
+              .emitStatement("builder.where(w)")
+              .endControlFlow();
+        }
+
+        writer.emitStatement("final int count = builder.table(\"%s\")\n%s.update(db, values)",
+            uri.table, whereBuilder.toString()).beginControlFlow("if (count > 0)");
 
         if (hasNotifyUris) {
           writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
@@ -756,6 +784,9 @@ public class ContentProviderWriter {
     for (UriContract uri : uris) {
       if (uri.allowDelete) {
         writer.beginControlFlow("case " + uri.name + ":");
+
+        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
+            uri.parent.getSimpleName().toString());
 
         boolean hasNotifyUris = false;
 
@@ -817,8 +848,36 @@ public class ContentProviderWriter {
         }
         whereBuilder.append(".where(where, whereArgs)\n");
 
-        writer.emitStatement("final int count = getBuilder(\"%s\")\n.table(\"%s\")\n%s.delete(db)",
-            uri.parent.getSimpleName().toString(), uri.table, whereBuilder.toString());
+        ExecutableElement where = whereCalls.get(uri.path);
+        if (where != null) {
+          String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
+          String methodName = where.getSimpleName().toString();
+
+          List<? extends VariableElement> parameters = where.getParameters();
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+            TypeMirror paramType = param.asType();
+            String typeAsString = paramType.toString();
+            if ("android.net.Uri".equals(typeAsString)) {
+              params.append("uri");
+            }
+          }
+
+          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
+              params.toString());
+          writer.beginControlFlow("for (String w : wheres)")
+              .emitStatement("builder.where(w)")
+              .endControlFlow();
+        }
+
+        writer.emitStatement("final int count = builder\n.table(\"%s\")\n%s.delete(db)", uri.table,
+            whereBuilder.toString());
 
         if (hasNotifyUris) {
           writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
