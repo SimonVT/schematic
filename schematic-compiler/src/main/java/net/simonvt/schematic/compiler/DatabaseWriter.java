@@ -31,6 +31,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
+import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.ExecOnCreate;
@@ -88,7 +89,7 @@ public class DatabaseWriter {
       OnUpgrade onUpgrade = enclosedElement.getAnnotation(OnUpgrade.class);
       if (onUpgrade != null) {
         if (this.onUpgrade != null) {
-          // TODO: ERROR
+          error("Multiple OnUpgrade annotations found in " + database.getSimpleName().toString());
         }
 
         this.onUpgrade = enclosedElement;
@@ -200,5 +201,9 @@ public class DatabaseWriter {
 
   private String getPackageName(Element type) {
     return elementUtils.getPackageOf(type).getQualifiedName().toString();
+  }
+
+  private void error(String error) {
+    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, error);
   }
 }
