@@ -93,10 +93,10 @@ public class SchematicProcessor extends AbstractProcessor {
 
   private void processDatabases(RoundEnvironment env) {
     for (Element database : env.getElementsAnnotatedWith(Database.class)) {
-      Database annotation = database.getAnnotation(Database.class);
       try {
         new DatabaseWriter(processingEnv, database, outPackage).writeJava(filer);
       } catch (IOException e) {
+        error("Unable to process " + database.asType().getKind().name());
         throw new RuntimeException(e);
       }
     }
@@ -105,8 +105,8 @@ public class SchematicProcessor extends AbstractProcessor {
       try {
         new ContentProviderWriter(processingEnv, provider, outPackage).write(filer);
       } catch (IOException e) {
-        e.printStackTrace();
         error("Unable to process " + provider.asType().getKind().name());
+        throw new RuntimeException(e);
       }
     }
   }
