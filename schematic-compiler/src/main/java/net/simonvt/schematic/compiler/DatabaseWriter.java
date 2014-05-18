@@ -102,10 +102,6 @@ public class DatabaseWriter {
     }
   }
 
-  public void addTable(VariableElement table) {
-    tables.add(table);
-  }
-
   public void writeJava(Filer filer) throws IOException {
     JavaFileObject jfo = filer.createSourceFile(getFileName());
     Writer out = jfo.openWriter();
@@ -197,10 +193,6 @@ public class DatabaseWriter {
 
   private String getFileName() {
     return outPackage + "." + className;
-  }
-
-  private String getPackageName(Element type) {
-    return elementUtils.getPackageOf(type).getQualifiedName().toString();
   }
 
   private void error(String error) {
