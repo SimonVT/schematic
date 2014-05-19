@@ -54,8 +54,34 @@ public final class NotesProvider {
 Including in your project
 =========================
 
+I recommend using the android-apt plugin. It doesn't include the compiler artifact in the final apk,
+and also sets the source paths so AS picks it up the generated classes.
+
 ```
-compile 'net.simonvt.schematic:schematic:{latest.version}'
+apply plugin: 'android'
+apply plugin: 'android-apt'
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:0.10.+'
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.2'
+  }
+}
+
+dependencies {
+  apt 'net.simonvt.schematic:schematic-compiler:{latest-version}'
+  compile 'net.simonvt.schematic:schematic:{latest-version}'
+}
+
+apt {
+  arguments {
+    schematicOutPackage 'your.output.package'
+  }
+}
 ```
 
 
