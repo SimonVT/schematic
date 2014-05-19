@@ -116,6 +116,7 @@ public class ContentProviderWriter {
   ExecutableElement defaultNotifyDelete;
 
   List<UriContract> uris = new ArrayList<UriContract>();
+  List<String> paths = new ArrayList<String>();
   Map<String, Element> notificationUris = new HashMap<String, Element>();
   Map<String, ExecutableElement> notifyInsert = new HashMap<String, ExecutableElement>();
   Map<String, ExecutableElement> notifyUpdate = new HashMap<String, ExecutableElement>();
@@ -184,10 +185,19 @@ public class ContentProviderWriter {
           ContentUri contentUri = element.getAnnotation(ContentUri.class);
           if (contentUri != null) {
             UriContract contract = new UriContract(UriContract.Type.EXACT);
-            String path = contentUri.path();
-            if (!path.trim().isEmpty()) {
-              contract.path = path;
+            String path = contentUri.path().trim();
+
+            if (path.isEmpty()) {
+              error("Empty path for " + getFullyQualified(element));
             }
+
+            if (!paths.contains(path)) {
+              paths.add(path);
+            } else {
+              error("Duplicate path " + path);
+            }
+
+            contract.path = path;
 
             String parent = ((TypeElement) enclosedElement).getQualifiedName().toString();
             contract.name = element.getSimpleName().toString();
@@ -227,7 +237,20 @@ public class ContentProviderWriter {
           InexactContentUri inexactUri = element.getAnnotation(InexactContentUri.class);
           if (inexactUri != null) {
             UriContract contract = new UriContract(UriContract.Type.INEXACT);
-            contract.path = inexactUri.path();
+            String path = inexactUri.path().trim();
+
+            if (path.isEmpty()) {
+              error("Empty path for " + getFullyQualified(element));
+            }
+
+            contract.path = path;
+            if (!paths.contains(path)) {
+              paths.add(path);
+            } else {
+              error("Duplicate path " + path);
+            }
+
+            contract.path = path;
 
             contract.whereColumns = inexactUri.whereColumn();
             contract.pathSegments = inexactUri.pathSegment();
@@ -909,6 +932,12 @@ public class ContentProviderWriter {
 
   private String getPackageName(TypeElement type) {
     return elementUtils.getPackageOf(type).getQualifiedName().toString();
+  }
+
+  private String getFullyQualified(Element element) {
+    String parent = ((TypeElement) element.getEnclosingElement()).getQualifiedName().toString();
+    String elm = element.getSimpleName().toString();
+    return parent + "." + elm;
   }
 
   private void error(String error) {
