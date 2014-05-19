@@ -346,6 +346,22 @@ public class ContentProviderWriter {
         }
       }
     }
+
+    checkPathsExist(notificationUris);
+    checkPathsExist(notifyInsert);
+    checkPathsExist(notifyUpdate);
+    checkPathsExist(notifyDelete);
+    checkPathsExist(whereCalls);
+    checkPathsExist(insertUris);
+  }
+
+  private void checkPathsExist(Map<String, ? extends Element> map) {
+    Set<String> paths = map.keySet();
+    for (String path : paths) {
+      if (!this.paths.contains(path)) {
+        error("Unknown path " + path + " for " + getFullyQualified(map.get(path)));
+      }
+    }
   }
 
   public void write(Filer filer) throws IOException {
