@@ -697,6 +697,50 @@ public class ContentProviderWriter {
       if (uri.allowUpdate) {
         writer.beginControlFlow("case " + uri.name + ":");
 
+        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
+            uri.parent.getSimpleName().toString());
+
+        if (uri.contractType == UriContract.Type.INEXACT) {
+          for (int i = 0; i < uri.whereColumns.length; i++) {
+            String column = uri.whereColumns[i];
+            int pathSegment = uri.pathSegments[i];
+            writer.emitStatement("builder.where(\"%s=?\", uri.getPathSegments().get(%d))", column,
+                pathSegment);
+          }
+        }
+        for (String where : uri.where) {
+          writer.emitStatement("builder.where(\"%s\")", where);
+        }
+        writer.emitStatement("builder.where(where, whereArgs)");
+
+        ExecutableElement where = whereCalls.get(uri.path);
+        if (where != null) {
+          String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
+          String methodName = where.getSimpleName().toString();
+
+          List<? extends VariableElement> parameters = where.getParameters();
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+            TypeMirror paramType = param.asType();
+            String typeAsString = paramType.toString();
+            if ("android.net.Uri".equals(typeAsString)) {
+              params.append("uri");
+            }
+          }
+
+          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
+              params.toString());
+          writer.beginControlFlow("for (String w : wheres)")
+              .emitStatement("builder.where(w)")
+              .endControlFlow();
+        }
+
         boolean hasNotifyUris = false;
         if ((uri.path != null && notifyUpdate.containsKey(uri.path))
             || defaultNotifyUpdate != null) {
@@ -731,10 +775,10 @@ public class ContentProviderWriter {
               params.append("values");
             }
             if ("java.lang.String".equals(typeAsString)) {
-              params.append("where");
+              params.append("builder.getSelection()");
             }
             if ("java.lang.String[]".equals(typeAsString)) {
-              params.append("whereArgs");
+              params.append("builder.getSelectionArgs()");
             }
           }
 
@@ -742,56 +786,8 @@ public class ContentProviderWriter {
               params.toString());
         }
 
-        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
-            uri.parent.getSimpleName().toString());
-
-        StringBuilder whereBuilder = new StringBuilder();
-        if (uri.contractType == UriContract.Type.INEXACT) {
-          for (int i = 0; i < uri.whereColumns.length; i++) {
-            String column = uri.whereColumns[i];
-            int pathSegment = uri.pathSegments[i];
-            whereBuilder.append(".where(\"")
-                .append(column)
-                .append("=?\" , uri.getPathSegments().get(")
-                .append(pathSegment)
-                .append("))\n");
-          }
-        }
-        for (String where : uri.where) {
-          whereBuilder.append(".where(\"").append(where).append("\")\n");
-        }
-        whereBuilder.append(".where(where, whereArgs)\n");
-
-        ExecutableElement where = whereCalls.get(uri.path);
-        if (where != null) {
-          String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
-          String methodName = where.getSimpleName().toString();
-
-          List<? extends VariableElement> parameters = where.getParameters();
-          StringBuilder params = new StringBuilder();
-          boolean first = true;
-          for (VariableElement param : parameters) {
-            if (first) {
-              first = false;
-            } else {
-              params.append(", ");
-            }
-            TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.net.Uri".equals(typeAsString)) {
-              params.append("uri");
-            }
-          }
-
-          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
-              params.toString());
-          writer.beginControlFlow("for (String w : wheres)")
-              .emitStatement("builder.where(w)")
-              .endControlFlow();
-        }
-
-        writer.emitStatement("final int count = builder.table(\"%s\")\n%s.update(db, values)",
-            uri.table, whereBuilder.toString()).beginControlFlow("if (count > 0)");
+        writer.emitStatement("final int count = builder.table(\"%s\")\n.update(db, values)",
+            uri.table).beginControlFlow("if (count > 0)");
 
         if (hasNotifyUris) {
           writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
@@ -827,8 +823,48 @@ public class ContentProviderWriter {
         writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
             uri.parent.getSimpleName().toString());
 
-        boolean hasNotifyUris = false;
+        if (uri.contractType == UriContract.Type.INEXACT) {
+          for (int i = 0; i < uri.whereColumns.length; i++) {
+            String column = uri.whereColumns[i];
+            int pathSegment = uri.pathSegments[i];
+            writer.emitStatement("builder.where(\"%s=?\", uri.getPathSegments().get(%d))", column,
+                pathSegment);
+          }
+        }
+        for (String where : uri.where) {
+          writer.emitStatement("builder.where(\"%s\")", where);
+        }
+        writer.emitStatement("builder.where(where, whereArgs)");
 
+        ExecutableElement where = whereCalls.get(uri.path);
+        if (where != null) {
+          String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
+          String methodName = where.getSimpleName().toString();
+
+          List<? extends VariableElement> parameters = where.getParameters();
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+            TypeMirror paramType = param.asType();
+            String typeAsString = paramType.toString();
+            if ("android.net.Uri".equals(typeAsString)) {
+              params.append("uri");
+            }
+          }
+
+          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
+              params.toString());
+          writer.beginControlFlow("for (String w : wheres)")
+              .emitStatement("builder.where(w)")
+              .endControlFlow();
+        }
+
+        boolean hasNotifyUris = false;
         if ((uri.path != null && notifyDelete.containsKey(uri.path))
             || defaultNotifyDelete != null) {
           hasNotifyUris = true;
@@ -860,10 +896,10 @@ public class ContentProviderWriter {
               params.append("uri");
             }
             if ("java.lang.String".equals(typeAsString)) {
-              params.append("where");
+              params.append("builder.getSelection()");
             }
             if ("java.lang.String[]".equals(typeAsString)) {
-              params.append("whereArgs");
+              params.append("builder.getSelectionArgs()");
             }
           }
 
@@ -871,53 +907,7 @@ public class ContentProviderWriter {
               params.toString());
         }
 
-        StringBuilder whereBuilder = new StringBuilder();
-        if (uri.contractType == UriContract.Type.INEXACT) {
-          for (int i = 0; i < uri.whereColumns.length; i++) {
-            String column = uri.whereColumns[i];
-            int pathSegment = uri.pathSegments[i];
-            whereBuilder.append(".where(\"")
-                .append(column)
-                .append("=?\" , uri.getPathSegments().get(")
-                .append(pathSegment)
-                .append("))\n");
-          }
-        }
-        for (String where : uri.where) {
-          whereBuilder.append(".where(\"").append(where).append("\")\n");
-        }
-        whereBuilder.append(".where(where, whereArgs)\n");
-
-        ExecutableElement where = whereCalls.get(uri.path);
-        if (where != null) {
-          String parent = ((TypeElement) where.getEnclosingElement()).getQualifiedName().toString();
-          String methodName = where.getSimpleName().toString();
-
-          List<? extends VariableElement> parameters = where.getParameters();
-          StringBuilder params = new StringBuilder();
-          boolean first = true;
-          for (VariableElement param : parameters) {
-            if (first) {
-              first = false;
-            } else {
-              params.append(", ");
-            }
-            TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.net.Uri".equals(typeAsString)) {
-              params.append("uri");
-            }
-          }
-
-          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
-              params.toString());
-          writer.beginControlFlow("for (String w : wheres)")
-              .emitStatement("builder.where(w)")
-              .endControlFlow();
-        }
-
-        writer.emitStatement("final int count = builder\n.table(\"%s\")\n%s.delete(db)", uri.table,
-            whereBuilder.toString());
+        writer.emitStatement("final int count = builder\n.table(\"%s\")\n.delete(db)", uri.table);
 
         if (hasNotifyUris) {
           writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
