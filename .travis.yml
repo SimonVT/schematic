@@ -1,0 +1,16 @@
+language: android
+
+jdk: oraclejdk7
+
+android:
+  components:
+    - build-tools-19.1.0
+
+before_install:
+  - TERM=dumb
+
+install:
+  - ./gradlew assembleDebug
+
+script:
+  - ./gradlew checkDebug
