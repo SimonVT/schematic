@@ -28,5 +28,5 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  */
 @Retention(CLASS) @Target(METHOD)
 public @interface NotifyDelete {
-  String[] paths() default {};
+  String[] paths() default { };
 }
