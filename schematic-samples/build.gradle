@@ -64,3 +64,9 @@ android.applicationVariants.all { variant ->
   checkstyle.exclude('**/R.java')
   project.tasks.getByName("check").dependsOn checkstyle
 }
+
+// Workaround because compiler and sample is in the same gradle project.
+// DO NOT USE WHEN PULLING FROM MAVEN REPO
+android.applicationVariants.all { variant ->
+  variant.javaCompile.dependsOn ':schematic-compiler:jar'
+}
