@@ -20,6 +20,10 @@ ext {
 }
 
 ext.libraries = [
+  androidGradle: 'com.android.tools.build:gradle:0.11.+',
+
+  androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.3',
+
   javawriter: 'com.squareup:javawriter:2.4.0',
 
   supportv4: 'com.android.support:support-v4:19.1.+',

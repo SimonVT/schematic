@@ -8,8 +8,8 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:0.10.+'
-    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.2'
+    classpath libraries.androidGradle
+    classpath libraries.androidApt
   }
 }
 
@@ -36,8 +36,8 @@ android {
   }
 
   defaultConfig {
-    minSdkVersion = parent.ext.minSdkVersion
-    targetSdkVersion = parent.ext.targetSdkVersion
+    minSdkVersion parent.ext.minSdkVersion
+    targetSdkVersion parent.ext.targetSdkVersion
 
     versionCode = parent.ext.versionCode;
     versionName = parent.ext.versionName
