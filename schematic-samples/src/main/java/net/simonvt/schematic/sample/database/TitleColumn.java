@@ -16,15 +16,12 @@
 
 package net.simonvt.schematic.sample.database;
 
-import net.simonvt.schematic.annotation.AutoIncrement;
 import net.simonvt.schematic.annotation.DataType;
-import net.simonvt.schematic.annotation.PrimaryKey;
+import net.simonvt.schematic.annotation.NotNull;
 
-import static net.simonvt.schematic.annotation.DataType.Type.INTEGER;
+import static net.simonvt.schematic.annotation.DataType.Type.TEXT;
 
-public interface ListColumns extends TitleColumn {
+public interface TitleColumn {
 
-  @DataType(INTEGER) @PrimaryKey @AutoIncrement String _ID = "_id";
-
-  String NOTES = "notes";
+  @DataType(TEXT) @NotNull String TITLE = "title";
 }
