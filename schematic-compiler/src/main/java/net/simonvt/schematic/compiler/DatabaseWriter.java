@@ -25,6 +25,7 @@ import java.util.List;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -35,6 +36,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.ExecOnCreate;
+import net.simonvt.schematic.annotation.OnCreate;
 import net.simonvt.schematic.annotation.OnUpgrade;
 import net.simonvt.schematic.annotation.Table;
 
@@ -51,7 +53,9 @@ public class DatabaseWriter {
   List<VariableElement> tables = new ArrayList<VariableElement>();
   List<VariableElement> execOnCreate = new ArrayList<VariableElement>();
 
-  Element onUpgrade;
+  ExecutableElement onCreate;
+
+  ExecutableElement onUpgrade;
 
   int version;
 
@@ -86,13 +90,22 @@ public class DatabaseWriter {
         tables.add((VariableElement) enclosedElement);
       }
 
+      OnCreate onCreate = enclosedElement.getAnnotation(OnCreate.class);
+      if (onCreate != null) {
+        if (this.onCreate != null) {
+          error("Multiple OnCreate annotations found in " + database.getSimpleName().toString());
+        }
+
+        this.onCreate = (ExecutableElement) enclosedElement;
+      }
+
       OnUpgrade onUpgrade = enclosedElement.getAnnotation(OnUpgrade.class);
       if (onUpgrade != null) {
         if (this.onUpgrade != null) {
           error("Multiple OnUpgrade annotations found in " + database.getSimpleName().toString());
         }
 
-        this.onUpgrade = enclosedElement;
+        this.onUpgrade = (ExecutableElement) enclosedElement;
       }
 
       ExecOnCreate execOnCreate = enclosedElement.getAnnotation(ExecOnCreate.class);
@@ -154,10 +167,14 @@ public class DatabaseWriter {
         .endControlFlow()
         .emitEmptyLine()
         .emitStatement("return instance")
-        .endMethod();
+        .endMethod()
+        .emitEmptyLine();
+
+    writer.emitField("Context", "context", EnumSet.of(Modifier.PRIVATE));
 
     writer.beginConstructor(EnumSet.of(Modifier.PRIVATE), "Context", "context")
         .emitStatement("super(context, \"%s\", null, DATABASE_VERSION)", fileName)
+        .emitStatement("this.context = context")
         .endConstructor()
         .emitEmptyLine();
 
@@ -175,6 +192,31 @@ public class DatabaseWriter {
       writer.emitStatement("db.execSQL(%s.%s)", parent, variableName);
     }
 
+    if (onCreate != null) {
+      List<? extends VariableElement> parameters = onCreate.getParameters();
+      StringBuilder params = new StringBuilder();
+      boolean first = true;
+      for (VariableElement param : parameters) {
+        if (first) {
+          first = false;
+        } else {
+          params.append(", ");
+        }
+        TypeMirror paramType = param.asType();
+        String typeAsString = paramType.toString();
+        if ("android.content.Context".equals(typeAsString)) {
+          params.append("context");
+        }
+        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
+          params.append("db");
+        }
+      }
+
+      String parent = ((TypeElement) onCreate.getEnclosingElement()).getQualifiedName().toString();
+      String methodName = onCreate.getSimpleName().toString();
+      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
+    }
+
     writer.endMethod().emitEmptyLine();
 
     writer.emitAnnotation(Override.class)
@@ -182,9 +224,38 @@ public class DatabaseWriter {
             "int", "oldVersion", "int", "newVersion");
 
     if (onUpgrade != null) {
+      List<? extends VariableElement> parameters = onUpgrade.getParameters();
+      StringBuilder params = new StringBuilder();
+      boolean first = true;
+      for (VariableElement param : parameters) {
+        if (first) {
+          first = false;
+        } else {
+          params.append(", ");
+        }
+        TypeMirror paramType = param.asType();
+        String typeAsString = paramType.toString();
+        if ("android.content.Context".equals(typeAsString)) {
+          params.append("context");
+        }
+        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
+          params.append("db");
+        }
+        if ("int".equals(typeAsString)) {
+          String name = param.getSimpleName().toString();
+          if ("oldVersion".equals(name)) {
+            params.append("oldVersion");
+          } else if ("newVersion".equals(name)) {
+            params.append("newVersion");
+          } else {
+            error("Unknown int parameter: " + name);
+          }
+        }
+      }
+
       String parent = ((TypeElement) onUpgrade.getEnclosingElement()).getQualifiedName().toString();
       String methodName = onUpgrade.getSimpleName().toString();
-      writer.emitStatement("%s.%s(db, oldVersion, newVersion)", parent, methodName);
+      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
     }
     writer.endMethod();
 
