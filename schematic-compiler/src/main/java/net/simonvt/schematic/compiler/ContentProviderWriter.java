@@ -200,7 +200,9 @@ public class ContentProviderWriter {
             contract.path = path;
 
             String parent = ((TypeElement) enclosedElement).getQualifiedName().toString();
-            contract.name = element.getSimpleName().toString();
+            contract.name = enclosedElement.getSimpleName().toString().toUpperCase()
+                + "_"
+                + element.getSimpleName().toString();
             contract.classQualifiedName = parent;
 
             String contentTable = contentUri.table();
@@ -256,7 +258,8 @@ public class ContentProviderWriter {
             contract.pathSegments = inexactUri.pathSegment();
 
             String parent = ((TypeElement) enclosedElement).getQualifiedName().toString();
-            contract.name = inexactUri.name();
+            contract.name =
+                enclosedElement.getSimpleName().toString().toUpperCase() + "_" + inexactUri.name();
             contract.classQualifiedName = parent;
 
             String contentTable = inexactUri.table();

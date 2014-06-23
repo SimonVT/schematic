@@ -145,7 +145,7 @@ public class NoteFragment extends Fragment {
           ContentValues cv = new ContentValues();
           cv.put(NoteColumns.LIST_ID, listId);
           cv.put(NoteColumns.NOTE, note);
-          appContext.getContentResolver().insert(Notes.NOTES, cv);
+          appContext.getContentResolver().insert(Notes.CONTENT_URI, cv);
         }
       }).start();
     } else {

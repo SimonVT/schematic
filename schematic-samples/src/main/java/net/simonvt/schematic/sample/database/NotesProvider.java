@@ -69,7 +69,7 @@ public final class NotesProvider {
         path = Path.LISTS,
         type = "vnd.android.cursor.dir/list",
         defaultSort = ListColumns.TITLE + " ASC")
-    public static final Uri LISTS = buildUri(Path.LISTS);
+    public static final Uri CONTENT_URI = buildUri(Path.LISTS);
 
     @InexactContentUri(
         path = Path.LISTS + "/#",
@@ -99,7 +99,7 @@ public final class NotesProvider {
     @ContentUri(
         path = Path.NOTES,
         type = "vnd.android.cursor.dir/note")
-    public static final Uri NOTES = buildUri(Path.NOTES);
+    public static final Uri CONTENT_URI = buildUri(Path.NOTES);
 
     @InexactContentUri(
         name = "NOTE_ID",

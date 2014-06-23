@@ -49,7 +49,7 @@ public class NewListDialog extends DialogFragment {
               @Override public void run() {
                 ContentValues cv = new ContentValues();
                 cv.put(ListColumns.TITLE, name);
-                context.getContentResolver().insert(Lists.LISTS, cv);
+                context.getContentResolver().insert(Lists.CONTENT_URI, cv);
               }
             }).start();
           }

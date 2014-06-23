@@ -91,7 +91,7 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   }
 
   @Override public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    return new CursorLoader(getActivity(), Lists.LISTS, ListsAdapter.PROJECTION, null, null, null);
+    return new CursorLoader(getActivity(), Lists.CONTENT_URI, ListsAdapter.PROJECTION, null, null, null);
   }
 
   @Override public void onLoadFinished(Loader loader, Cursor data) {
