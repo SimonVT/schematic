@@ -56,6 +56,8 @@ public @interface InexactContentUri {
 
   String defaultSort() default "";
 
+  int conflictAlgorithm() default -1;
+
   boolean allowQuery() default true;
 
   boolean allowUpdate() default true;

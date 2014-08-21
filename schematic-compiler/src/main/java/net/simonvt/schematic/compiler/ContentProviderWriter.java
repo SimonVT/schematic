@@ -76,6 +76,8 @@ public class ContentProviderWriter {
 
     String defaultSort;
 
+    int conflictAlgorithm;
+
     String[] where;
 
     String[] whereColumns;
@@ -226,6 +228,8 @@ public class ContentProviderWriter {
               contract.defaultSort = defaultSort;
             }
 
+            contract.conflictAlgorithm = contentUri.conflictAlgorithm();
+
             contract.allowQuery = contentUri.allowQuery();
             contract.allowInsert = contentUri.allowInsert();
             contract.allowUpdate = contentUri.allowUpdate();
@@ -282,6 +286,8 @@ public class ContentProviderWriter {
             if (!defaultSort.trim().isEmpty()) {
               contract.defaultSort = defaultSort;
             }
+
+            contract.conflictAlgorithm = inexactUri.conflictAlgorithm();
 
             contract.allowQuery = inexactUri.allowQuery();
             contract.allowInsert = inexactUri.allowInsert();
@@ -591,8 +597,13 @@ public class ContentProviderWriter {
 
     for (UriContract uri : uris) {
       if (uri.allowInsert) {
-        writer.beginControlFlow("case " + uri.name + ":")
-            .emitStatement("final long id = db.insertOrThrow(\"%s\", null, values)", uri.table);
+
+        writer.beginControlFlow("case " + uri.name + ":");
+        if (uri.conflictAlgorithm == -1) {
+          writer.emitStatement("final long id = db.insertOrThrow(\"%s\", null, values)", uri.table);
+        } else {
+          writer.emitStatement("final long id = db.insertWithOnConflict(\"%s\", null, values, %d)", uri.table, uri.conflictAlgorithm);
+        }
 
         if ((uri.path != null && notifyInsert.containsKey(uri.path))
             || defaultNotifyInsert != null) {

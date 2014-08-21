@@ -47,6 +47,8 @@ public @interface ContentUri {
 
   String defaultSort() default "";
 
+  int conflictAlgorithm() default -1;
+
   boolean allowQuery() default true;
 
   boolean allowInsert() default true;
