@@ -29,13 +29,8 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
-import net.simonvt.schematic.annotation.AutoIncrement;
-import net.simonvt.schematic.annotation.DataType;
-import net.simonvt.schematic.annotation.DefaultValue;
-import net.simonvt.schematic.annotation.NotNull;
-import net.simonvt.schematic.annotation.PrimaryKey;
-import net.simonvt.schematic.annotation.References;
-import net.simonvt.schematic.annotation.Table;
+
+import net.simonvt.schematic.annotation.*;
 
 public class TableWriter {
 
@@ -128,6 +123,12 @@ public class TableWriter {
       if (autoIncrement != null) {
         query.append(" ").append("AUTOINCREMENT");
       }
+
+        Unique unique = element.getAnnotation(Unique.class);
+
+        if (unique != null) {
+            query.append(" ").append("UNIQUE");
+        }
 
       References references = element.getAnnotation(References.class);
       if (references != null) {
