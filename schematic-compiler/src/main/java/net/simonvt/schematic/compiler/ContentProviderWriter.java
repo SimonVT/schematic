@@ -76,6 +76,12 @@ public class ContentProviderWriter {
 
     String defaultSort;
 
+    String groupBy;
+
+    String having;
+
+    String limit;
+
     String[] where;
 
     String[] whereColumns;
@@ -226,6 +232,21 @@ public class ContentProviderWriter {
               contract.defaultSort = defaultSort;
             }
 
+            String groupBy = contentUri.groupBy();
+            if (!groupBy.trim().isEmpty()) {
+              contract.groupBy = groupBy;
+            }
+
+            String having = contentUri.having();
+            if (!having.trim().isEmpty()) {
+              contract.having = having;
+            }
+
+            String limit = contentUri.limit();
+            if (!limit.trim().isEmpty()) {
+              contract.limit = limit;
+            }
+
             contract.allowQuery = contentUri.allowQuery();
             contract.allowInsert = contentUri.allowInsert();
             contract.allowUpdate = contentUri.allowUpdate();
@@ -281,6 +302,21 @@ public class ContentProviderWriter {
             String defaultSort = inexactUri.defaultSort();
             if (!defaultSort.trim().isEmpty()) {
               contract.defaultSort = defaultSort;
+            }
+
+            String groupBy = inexactUri.groupBy();
+            if (!groupBy.trim().isEmpty()) {
+              contract.groupBy = groupBy;
+            }
+
+            String having = inexactUri.having();
+            if (!having.trim().isEmpty()) {
+              contract.having = having;
+            }
+
+            String limit = inexactUri.limit();
+            if (!limit.trim().isEmpty()) {
+              contract.limit = limit;
             }
 
             contract.allowQuery = inexactUri.allowQuery();
@@ -555,8 +591,28 @@ public class ContentProviderWriter {
           tableBuilder.append(" ").append(uri.join);
         }
 
-        writer.emitStatement(
-            "Cursor cursor = builder.table(\"%s\")\n%s.query(db, projection, sortOrder)",
+        if (uri.groupBy != null) {
+          writer.emitField("String", "groupBy", EnumSet.of(Modifier.FINAL),
+              "\"" + uri.groupBy + "\"");
+        } else {
+          writer.emitField("String", "groupBy", EnumSet.of(Modifier.FINAL), "null");
+        }
+
+        if (uri.having != null) {
+          writer.emitField("String", "having", EnumSet.of(Modifier.FINAL),
+              "\"" + uri.having + "\"");
+        } else {
+          writer.emitField("String", "having", EnumSet.of(Modifier.FINAL), "null");
+        }
+
+        if (uri.limit != null) {
+          writer.emitField("String", "limit", EnumSet.of(Modifier.FINAL), "\"" + uri.limit + "\"");
+        } else {
+          writer.emitField("String", "limit", EnumSet.of(Modifier.FINAL), "null");
+        }
+
+        writer.emitStatement("Cursor cursor = builder.table(\"%s\")\n%s"
+                + ".query(db, projection, groupBy, having, sortOrder, limit)",
             tableBuilder.toString(), whereBuilder.toString());
 
         Element notifyUri = notificationUris.get(uri.path);

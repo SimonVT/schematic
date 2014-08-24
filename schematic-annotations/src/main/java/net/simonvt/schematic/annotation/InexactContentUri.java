@@ -25,7 +25,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 /**
  * An inexact content URI. Annotates the method used to construct the URI.
  * <pre>{@code
- * @InexactContentUri(
+ * &#064;InexactContentUri(
  *   path = Path.LISTS + "/#",
  *   name = "LIST_ID",
  *   type = "vnd.android.cursor.item/list",
@@ -55,6 +55,12 @@ public @interface InexactContentUri {
   String join() default "";
 
   String defaultSort() default "";
+
+  String groupBy() default "";
+
+  String having() default "";
+
+  String limit() default "";
 
   boolean allowQuery() default true;
 

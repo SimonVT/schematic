@@ -47,6 +47,12 @@ public @interface ContentUri {
 
   String defaultSort() default "";
 
+  String groupBy() default "";
+
+  String having() default "";
+
+  String limit() default "";
+
   boolean allowQuery() default true;
 
   boolean allowInsert() default true;
