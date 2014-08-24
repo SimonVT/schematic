@@ -491,6 +491,42 @@ public class ContentProviderWriter {
 
     writer.emitStatement("return builder").endMethod().emitEmptyLine();
 
+    writer.beginMethod("void", "insertValues", EnumSet.of(Modifier.PRIVATE), "SQLiteDatabase", "db",
+        "String", "table", "ContentValues[]", "values");
+
+    writer.beginControlFlow("for (ContentValues cv : values)")
+        .emitStatement("db.insertOrThrow(table, null, cv)")
+        .endControlFlow();
+
+    writer.endMethod().emitEmptyLine();
+
+    // Bulk insert
+    writer.emitAnnotation(Override.class)
+        .beginMethod("int", "bulkInsert", EnumSet.of(Modifier.PUBLIC), "Uri", "uri",
+            "ContentValues[]", "values")
+        .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
+            "database.getWritableDatabase()")
+        .emitStatement("db.beginTransaction()")
+        .emitEmptyLine();
+
+    writer.beginControlFlow("switch(MATCHER.match(uri))");
+    for (UriContract uri : uris) {
+      if (uri.allowInsert) {
+        writer.beginControlFlow("case " + uri.name + ":")
+            .emitStatement("insertValues(db, \"%s\", values)", uri.table)
+            .endControlFlow();
+      }
+    }
+    writer.endControlFlow();
+
+    writer.emitEmptyLine()
+        .emitStatement("db.setTransactionSuccessful()")
+        .emitStatement("db.endTransaction()")
+        .emitStatement("getContext().getContentResolver().notifyChange(uri, null)")
+        .emitStatement("return values.length")
+        .endMethod()
+        .emitEmptyLine();
+
     // Apply batch
     writer.emitAnnotation(Override.class)
         .beginMethod("ContentProviderResult[]", "applyBatch", EnumSet.of(Modifier.PUBLIC),
