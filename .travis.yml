@@ -14,3 +14,4 @@ install:
 
 script:
   - ./gradlew checkDebug
+  - ./gradlew check
