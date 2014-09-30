@@ -2,10 +2,6 @@ allprojects {
   repositories {
     mavenCentral()
   }
-
-  tasks.withType(Compile) {
-    options.encoding = "UTF-8"
-  }
 }
 
 ext {
@@ -20,7 +16,7 @@ ext {
 }
 
 ext.libraries = [
-  androidGradle: 'com.android.tools.build:gradle:0.12.+',
+  androidGradle: 'com.android.tools.build:gradle:0.13.+',
 
   androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.4',
 

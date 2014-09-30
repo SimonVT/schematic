@@ -6,8 +6,8 @@ sourceCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
   compile project(':schematic-annotations')
-  compile libraries.javawriter
-  compile libraries.guava
+  compile parent.libraries.javawriter
+  compile parent.libraries.guava
 }
 
 checkstyle {

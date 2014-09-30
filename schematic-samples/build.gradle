@@ -8,16 +8,16 @@ buildscript {
   }
 
   dependencies {
-    classpath libraries.androidGradle
-    classpath libraries.androidApt
+    classpath parent.libraries.androidGradle
+    classpath parent.libraries.androidApt
   }
 }
 
 dependencies {
   apt project(':schematic-compiler')
   compile project(':schematic')
-  compile libraries.supportv4
-  compile libraries.butterknife
+  compile parent.libraries.supportv4
+  compile parent.libraries.butterknife
 }
 
 apt {

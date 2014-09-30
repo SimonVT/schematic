@@ -7,7 +7,7 @@ buildscript {
   }
 
   dependencies {
-    classpath libraries.androidGradle
+    classpath parent.libraries.androidGradle
   }
 }
 
