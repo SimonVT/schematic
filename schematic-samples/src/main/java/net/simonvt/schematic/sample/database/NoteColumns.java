@@ -26,9 +26,9 @@ import static net.simonvt.schematic.annotation.DataType.Type.TEXT;
 
 public interface NoteColumns {
 
-  @DataType(INTEGER) @PrimaryKey @AutoIncrement String _ID = "_id";
+  @DataType(INTEGER) @PrimaryKey @AutoIncrement String ID = "_id";
 
-  @DataType(INTEGER) @References(table = NotesDatabase.LISTS, column = ListColumns._ID) String
+  @DataType(INTEGER) @References(table = NotesDatabase.LISTS, column = ListColumns.ID) String
       LIST_ID = "listId";
 
   @DataType(TEXT) String NOTE = "note";

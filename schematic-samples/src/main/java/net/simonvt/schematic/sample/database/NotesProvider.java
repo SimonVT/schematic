@@ -75,7 +75,7 @@ public final class NotesProvider {
         path = Path.LISTS + "/#",
         name = "LIST_ID",
         type = "vnd.android.cursor.item/list",
-        whereColumn = ListColumns._ID,
+        whereColumn = ListColumns.ID,
         pathSegment = 1)
     public static Uri withId(long id) {
       return buildUri(Path.LISTS, String.valueOf(id));
@@ -90,7 +90,7 @@ public final class NotesProvider {
         + "="
         + NotesDatabase.LISTS
         + "."
-        + ListColumns._ID
+        + ListColumns.ID
         + ")";
   }
 
@@ -105,7 +105,7 @@ public final class NotesProvider {
         name = "NOTE_ID",
         path = Path.NOTES + "/#",
         type = "vnd.android.cursor.item/note",
-        whereColumn = NoteColumns._ID,
+        whereColumn = NoteColumns.ID,
         pathSegment = 1)
     public static Uri withId(long id) {
       return buildUri(Path.NOTES, String.valueOf(id));

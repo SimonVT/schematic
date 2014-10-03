@@ -27,9 +27,10 @@
 
         <!-- Checks for Naming Conventions.                  -->
         <!-- See http://checkstyle.sf.net/config_naming.html -->
-        <module name="ConstantName">
+        <!--module name="ConstantName">
           <property name="format" value="^[_A-Z][A-Z0-9]*(_[A-Z0-9]+)*$"/>
-        </module>
+        </module-->
+        <module name="ConstantName"/>
         <module name="LocalFinalVariableName"/>
         <module name="LocalVariableName"/>
         <module name="MemberName"/>

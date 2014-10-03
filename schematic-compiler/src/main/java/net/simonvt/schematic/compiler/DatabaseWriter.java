@@ -150,6 +150,7 @@ public class DatabaseWriter {
     for (VariableElement table : tables) {
       TableWriter tableWriter = new TableWriter(processingEnv, table);
       tableWriter.createTable(writer);
+      tableWriter.createValuesBuilder(filer, outPackage);
       writer.emitEmptyLine();
     }
 
@@ -262,8 +263,37 @@ public class DatabaseWriter {
     writer.endType().close();
   }
 
+  public void writeValues(Filer filer) throws IOException {
+    JavaFileObject jfo = filer.createSourceFile(getValuesFileName());
+    Writer out = jfo.openWriter();
+    JavaWriter writer = new JavaWriter(out);
+    writer.emitPackage(outPackage + ".values");
+
+    writer.beginType(className + "Values", "class", EnumSet.of(Modifier.PUBLIC)).emitEmptyLine();
+
+    for (VariableElement table : tables) {
+      Table tableAnnotation = table.getAnnotation(Table.class);
+      String tableName = table.getConstantValue().toString();
+      tableName = Character.toUpperCase(tableName.charAt(0)) + tableName.substring(1);
+
+      String methodName = "for" + tableName;
+      String valuesName = tableName + "ValuesBuilder";
+
+      writer.beginMethod(valuesName, methodName, EnumSet.of(Modifier.PUBLIC))
+          .emitStatement("return new %s()", valuesName)
+          .endMethod()
+          .emitEmptyLine();
+    }
+
+    writer.endType().close();
+  }
+
   private String getFileName() {
     return outPackage + "." + className;
+  }
+
+  private String getValuesFileName() {
+    return outPackage + ".values." + className + "Values";
   }
 
   private void error(String error) {

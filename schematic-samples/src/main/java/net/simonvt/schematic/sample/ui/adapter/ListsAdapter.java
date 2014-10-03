@@ -31,7 +31,7 @@ import net.simonvt.schematic.sample.database.ListColumns;
 public class ListsAdapter extends CursorAdapter {
 
   public static final String[] PROJECTION = new String[] {
-      ListColumns._ID, ListColumns.TITLE, ListColumns.NOTES,
+      ListColumns.ID, ListColumns.TITLE, ListColumns.NOTES,
   };
 
   public ListsAdapter(Context context, Cursor c) {

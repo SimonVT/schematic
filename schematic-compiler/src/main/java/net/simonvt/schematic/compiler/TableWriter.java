@@ -16,11 +16,14 @@
 
 package net.simonvt.schematic.compiler;
 
+import com.google.common.base.CaseFormat;
 import com.squareup.javawriter.JavaWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -29,6 +32,7 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
+import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.AutoIncrement;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DefaultValue;
@@ -146,6 +150,92 @@ public class TableWriter {
         EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), query.toString());
 
     //writer.emitStatement("db.execSQL(\"%s\")", query.toString());
+  }
+
+  public void createValuesBuilder(Filer filer, String outPackage) {
+    try {
+      String name = Character.toUpperCase(this.name.charAt(0)) + this.name.substring(1);
+      String className = name + "ValuesBuilder";
+      String qualifiedName = outPackage + ".values." + className;
+
+      Writer out = null;
+      JavaFileObject jfo = filer.createSourceFile(qualifiedName);
+      out = jfo.openWriter();
+
+      JavaWriter writer = new JavaWriter(out);
+
+      writer.emitPackage(outPackage + ".values");
+
+      writer.emitImports("android.content.ContentValues");
+      writer.emitImports(columnsClass.getQualifiedName().toString());
+
+      writer.emitEmptyLine();
+
+      writer.beginType(className, "class", EnumSet.of(Modifier.PUBLIC)).emitEmptyLine();
+
+      writer.emitField("ContentValues", "values").emitEmptyLine();
+
+      writer.beginConstructor(EnumSet.of(Modifier.PUBLIC))
+          .emitStatement("values = new ContentValues()")
+          .endConstructor()
+          .emitEmptyLine();
+
+      for (VariableElement element : columns) {
+        String elmName = element.getSimpleName().toString();
+        elmName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, elmName);
+        String colName = element.getConstantValue().toString();
+
+        DataType dataType = element.getAnnotation(DataType.class);
+        DataType.Type type = dataType.value();
+
+        String colQualified =
+            columnsClass.getSimpleName().toString() + "." + element.getSimpleName().toString();
+
+        switch (type) {
+          case INTEGER:
+            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "int", "value")
+                .emitStatement("values.put(%s, value)", colQualified)
+                .emitStatement("return this")
+                .endMethod()
+                .emitEmptyLine();
+
+            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "long", "value")
+                .emitStatement("values.put(%s, value)", colQualified)
+                .emitStatement("return this")
+                .endMethod()
+                .emitEmptyLine();
+            break;
+
+          case REAL:
+            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "float", "value")
+                .emitStatement("values.put(%s, value)", colQualified)
+                .emitStatement("return this")
+                .endMethod()
+                .emitEmptyLine();
+            break;
+
+          case TEXT:
+            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "String", "value")
+                .emitStatement("values.put(%s, value)", colQualified)
+                .emitStatement("return this")
+                .endMethod()
+                .emitEmptyLine();
+            break;
+
+          case BLOB:
+            // TODO: What do I call here?
+            break;
+        }
+      }
+
+      writer.beginMethod("ContentValues", "values", EnumSet.of(Modifier.PUBLIC))
+          .emitStatement("return values")
+          .endMethod();
+
+      writer.endType().close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private void error(String error) {

@@ -24,7 +24,7 @@ import static net.simonvt.schematic.annotation.DataType.Type.INTEGER;
 
 public interface ListColumns extends TitleColumn {
 
-  @DataType(INTEGER) @PrimaryKey @AutoIncrement String _ID = "_id";
+  @DataType(INTEGER) @PrimaryKey @AutoIncrement String ID = "_id";
 
   String NOTES = "notes";
 }

@@ -94,7 +94,9 @@ public class SchematicProcessor extends AbstractProcessor {
   private void processDatabases(RoundEnvironment env) {
     for (Element database : env.getElementsAnnotatedWith(Database.class)) {
       try {
-        new DatabaseWriter(processingEnv, database, outPackage).writeJava(filer);
+        DatabaseWriter writer = new DatabaseWriter(processingEnv, database, outPackage);
+        writer.writeJava(filer);
+        writer.writeValues(filer);
       } catch (IOException e) {
         error("Unable to process " + database.asType().getKind().name());
         throw new RuntimeException(e);
