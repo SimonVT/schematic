@@ -40,6 +40,7 @@ import net.simonvt.schematic.annotation.NotNull;
 import net.simonvt.schematic.annotation.PrimaryKey;
 import net.simonvt.schematic.annotation.References;
 import net.simonvt.schematic.annotation.Table;
+import net.simonvt.schematic.annotation.Unique;
 
 public class TableWriter {
 
@@ -126,6 +127,11 @@ public class TableWriter {
       PrimaryKey primary = element.getAnnotation(PrimaryKey.class);
       if (primary != null) {
         query.append(" ").append("PRIMARY KEY");
+      }
+
+      Unique unique = element.getAnnotation(Unique.class);
+      if (unique != null) {
+        query.append(" ").append("UNIQUE");
       }
 
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
