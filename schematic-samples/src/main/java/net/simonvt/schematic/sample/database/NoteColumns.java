@@ -20,6 +20,7 @@ import net.simonvt.schematic.annotation.AutoIncrement;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.PrimaryKey;
 import net.simonvt.schematic.annotation.References;
+import net.simonvt.schematic.sample.database.NotesDatabase.Tables;
 
 import static net.simonvt.schematic.annotation.DataType.Type.INTEGER;
 import static net.simonvt.schematic.annotation.DataType.Type.TEXT;
@@ -28,8 +29,8 @@ public interface NoteColumns {
 
   @DataType(INTEGER) @PrimaryKey @AutoIncrement String ID = "_id";
 
-  @DataType(INTEGER) @References(table = NotesDatabase.LISTS, column = ListColumns.ID) String
-      LIST_ID = "listId";
+  @DataType(INTEGER) @References(table = Tables.LISTS, column = ListColumns.ID) String LIST_ID =
+      "listId";
 
   @DataType(TEXT) String NOTE = "note";
 }

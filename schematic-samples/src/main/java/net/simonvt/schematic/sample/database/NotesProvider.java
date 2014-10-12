@@ -30,6 +30,7 @@ import net.simonvt.schematic.annotation.NotifyDelete;
 import net.simonvt.schematic.annotation.NotifyInsert;
 import net.simonvt.schematic.annotation.NotifyUpdate;
 import net.simonvt.schematic.annotation.TableEndpoint;
+import net.simonvt.schematic.sample.database.NotesDatabase.Tables;
 
 @ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
 public final class NotesProvider {
@@ -55,7 +56,7 @@ public final class NotesProvider {
     return builder.build();
   }
 
-  @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
+  @TableEndpoint(table = Tables.LISTS) public static class Lists {
 
     @MapColumns public static Map<String, String> mapColumns() {
       Map<String, String> map = new HashMap<String, String>();
@@ -88,7 +89,7 @@ public final class NotesProvider {
         + "."
         + NoteColumns.LIST_ID
         + "="
-        + NotesDatabase.LISTS
+        + Tables.LISTS
         + "."
         + ListColumns.ID
         + ")";

@@ -46,11 +46,14 @@ public class DatabaseWriter {
 
   Elements elementUtils;
 
+  Element database;
+
   String className;
 
   String fileName;
 
   List<VariableElement> tables = new ArrayList<VariableElement>();
+
   List<VariableElement> execOnCreate = new ArrayList<VariableElement>();
 
   ExecutableElement onCreate;
@@ -64,6 +67,8 @@ public class DatabaseWriter {
   public DatabaseWriter(ProcessingEnvironment env, Element database, String outPackage) {
     this.processingEnv = env;
     this.elementUtils = env.getElementUtils();
+
+    this.database = database;
 
     this.outPackage = outPackage;
 
@@ -83,8 +88,15 @@ public class DatabaseWriter {
           CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, databaseSchematicName) + ".db";
     }
 
-    List<? extends Element> enclosedElements = database.getEnclosedElements();
+    findAnnotations(database);
+  }
+
+  private void findAnnotations(Element element) {
+    List<? extends Element> enclosedElements = element.getEnclosedElements();
+
     for (Element enclosedElement : enclosedElements) {
+      findAnnotations(enclosedElement);
+
       Table table = enclosedElement.getAnnotation(Table.class);
       if (table != null) {
         tables.add((VariableElement) enclosedElement);
@@ -154,22 +166,7 @@ public class DatabaseWriter {
       writer.emitEmptyLine();
     }
 
-    writer.emitField(className, "instance",
-        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.VOLATILE)).emitEmptyLine();
-
-    writer.beginMethod(className, "getInstance", EnumSet.of(Modifier.PUBLIC, Modifier.STATIC),
-        "Context", "context")
-        .beginControlFlow("if (instance == null)")
-        .beginControlFlow("synchronized (" + className + ".class)")
-        .beginControlFlow("if (instance == null)")
-        .emitStatement("instance = new %s(context)", className)
-        .endControlFlow()
-        .endControlFlow()
-        .endControlFlow()
-        .emitEmptyLine()
-        .emitStatement("return instance")
-        .endMethod()
-        .emitEmptyLine();
+    WriterUtils.singleton(writer, className, "Context", "context");
 
     writer.emitField("Context", "context", EnumSet.of(Modifier.PRIVATE));
 

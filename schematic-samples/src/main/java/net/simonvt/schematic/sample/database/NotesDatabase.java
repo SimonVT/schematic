@@ -31,7 +31,10 @@ public final class NotesDatabase {
 
   public static final int VERSION = 1;
 
-  @Table(ListColumns.class) public static final String LISTS = "lists";
+  public static class Tables {
+
+    @Table(ListColumns.class) public static final String LISTS = "lists";
+  }
 
   @Table(NoteColumns.class) public static final String NOTES = "notes";
 
