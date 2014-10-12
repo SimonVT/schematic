@@ -54,6 +54,8 @@ public class TableWriter {
 
   List<VariableElement> columns = new ArrayList<>();
 
+  List<String> primaryKeys = new ArrayList<>();
+
   public TableWriter(ProcessingEnvironment env, VariableElement table) {
     this.processingEnv = env;
     this.table = table;
@@ -82,17 +84,28 @@ public class TableWriter {
         continue;
       }
 
-      DataType dataType = element.getAnnotation(DataType.class);
+      VariableElement variableElement = (VariableElement) element;
+
+      DataType dataType = variableElement.getAnnotation(DataType.class);
       if (dataType == null) {
         continue;
       }
 
-      this.columns.add((VariableElement) element);
+      String columnName = variableElement.getConstantValue().toString();
+
+      PrimaryKey primaryKey = variableElement.getAnnotation(PrimaryKey.class);
+      if (primaryKey != null) {
+        primaryKeys.add(columnName);
+      }
+
+      this.columns.add(variableElement);
     }
   }
 
   public void createTable(JavaWriter writer) throws IOException {
     StringBuilder query = new StringBuilder("\"CREATE TABLE " + name + " (");
+
+    final int primaryKeyCount = primaryKeys.size();
 
     boolean first = true;
     for (VariableElement element : columns) {
@@ -125,7 +138,7 @@ public class TableWriter {
       }
 
       PrimaryKey primary = element.getAnnotation(PrimaryKey.class);
-      if (primary != null) {
+      if (primary != null && primaryKeyCount == 1) {
         query.append(" ").append("PRIMARY KEY");
       }
 
@@ -136,6 +149,11 @@ public class TableWriter {
 
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
       if (autoIncrement != null) {
+        if (primaryKeyCount > 1) {
+          throw new IllegalArgumentException(
+              "AutoIncrement is not allowed when multiple primary keys are defined");
+        }
+
         query.append(" ").append("AUTOINCREMENT");
       }
 
@@ -148,6 +166,20 @@ public class TableWriter {
             .append(references.column())
             .append(")");
       }
+    }
+
+    if (primaryKeyCount > 1) {
+      query.append(",\"\n + \"PRIMARY KEY (");
+      first = true;
+      for (String columnName : primaryKeys) {
+        if (!first) {
+          query.append(",");
+        } else {
+          first = false;
+        }
+        query.append(columnName);
+      }
+      query.append(")");
     }
 
     query.append(")\"");
