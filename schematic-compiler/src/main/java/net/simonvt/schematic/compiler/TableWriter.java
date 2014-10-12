@@ -93,6 +93,8 @@ public class TableWriter {
 
   public void createTable(JavaWriter writer) throws IOException {
     StringBuilder query = new StringBuilder("\"CREATE TABLE " + name + " (");
+    
+    List<String> primaryKeys = new ArrayList<String>();
 
     boolean first = true;
     for (VariableElement element : columns) {
@@ -126,7 +128,7 @@ public class TableWriter {
 
       PrimaryKey primary = element.getAnnotation(PrimaryKey.class);
       if (primary != null) {
-        query.append(" ").append("PRIMARY KEY");
+        primaryKeys.add(columnName);
       }
 
       Unique unique = element.getAnnotation(Unique.class);
@@ -148,6 +150,21 @@ public class TableWriter {
             .append(references.column())
             .append(")");
       }
+    }
+    
+    // Works with one (default) primary keys or compound keys
+    if (primaryKeys.size() > 0) {
+      query.append(", PRIMARY KEY (");
+      first = true;
+      for (String columnName : primaryKeys) {
+        if (!first) {
+          query.append(",");
+        } else {
+          first = false;
+        }
+        query.append(columnName);
+      }
+      query.append(")");
     }
 
     query.append(")\"");
