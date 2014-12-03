@@ -514,6 +514,7 @@ public class ContentProviderWriter {
       if (uri.allowInsert) {
         writer.beginControlFlow("case " + uri.name + ":")
             .emitStatement("insertValues(db, \"%s\", values)", uri.table)
+            .emitStatement("break")
             .endControlFlow();
       }
     }
