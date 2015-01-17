@@ -76,12 +76,6 @@ dependencies {
   apt 'net.simonvt.schematic:schematic-compiler:{latest-version}'
   compile 'net.simonvt.schematic:schematic:{latest-version}'
 }
-
-apt {
-  arguments {
-    schematicOutPackage 'your.output.package'
-  }
-}
 ```
 
 
