@@ -132,13 +132,11 @@ public class ContentProviderWriter {
 
   Map<Element, ExecutableElement> columnMaps = new HashMap<Element, ExecutableElement>();
 
-  public ContentProviderWriter(ProcessingEnvironment processingEnv, Element provider,
-      String outPackage) {
+  public ContentProviderWriter(ProcessingEnvironment processingEnv, Elements elements,
+      Element provider) {
     this.processingEnv = processingEnv;
     this.provider = provider;
     elementUtils = processingEnv.getElementUtils();
-
-    this.outPackage = outPackage;
 
     TypeElement elm = (TypeElement) provider;
     descriptorPackage = getPackageName(elm);
@@ -149,6 +147,11 @@ public class ContentProviderWriter {
     this.providerName = annotation.name();
     if (providerName.trim().isEmpty()) {
       providerName = provider.getSimpleName().toString();
+    }
+
+    this.outPackage = annotation.packageName();
+    if (outPackage.trim().isEmpty()) {
+      this.outPackage = elements.getPackageOf(provider).getQualifiedName() + ".generated";
     }
 
     // Get database name
@@ -186,8 +189,8 @@ public class ContentProviderWriter {
         final String table = tableEndpoint.table();
 
         // Get uri's
-        List<? extends Element> elements = enclosedElement.getEnclosedElements();
-        for (Element element : elements) {
+        List<? extends Element> contentUris = enclosedElement.getEnclosedElements();
+        for (Element element : contentUris) {
           ContentUri contentUri = element.getAnnotation(ContentUri.class);
           if (contentUri != null) {
             UriContract contract = new UriContract(UriContract.Type.EXACT);

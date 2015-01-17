@@ -32,7 +32,9 @@ import net.simonvt.schematic.annotation.NotifyUpdate;
 import net.simonvt.schematic.annotation.TableEndpoint;
 import net.simonvt.schematic.sample.database.NotesDatabase.Tables;
 
-@ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
+@ContentProvider(authority = NotesProvider.AUTHORITY,
+    database = NotesDatabase.class,
+    packageName = "net.simonvt.schematic.sample.provider")
 public final class NotesProvider {
 
   private NotesProvider() {

@@ -39,6 +39,8 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 public @interface ContentProvider {
   String name() default "";
 
+  String packageName() default "";
+
   String authority();
 
   Class database();

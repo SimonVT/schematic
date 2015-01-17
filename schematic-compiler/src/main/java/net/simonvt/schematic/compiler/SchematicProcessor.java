@@ -21,13 +21,11 @@ import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -37,38 +35,22 @@ import javax.tools.Diagnostic.Kind;
 import net.simonvt.schematic.annotation.ContentProvider;
 import net.simonvt.schematic.annotation.Database;
 
-@SupportedOptions({
-    SchematicProcessor.OPTION_PACKAGE
-})
 public class SchematicProcessor extends AbstractProcessor {
-
-  private static final String DEFAULT_OUT_PACKAGE = "net.simonvt.schematic.provider";
-
-  static final String OPTION_PACKAGE = "schematicOutPackage";
 
   private static final List<Class<? extends Annotation>> ANNOTATIONS = Arrays.asList(//
       Database.class, //
       ContentProvider.class);
 
-  private Elements elementUtils;
-  private Types typeUtils;
+  private Elements elements;
+  private Types types;
   private Filer filer;
-
-  private String outPackage;
 
   @Override public synchronized void init(ProcessingEnvironment env) {
     super.init(env);
 
-    elementUtils = env.getElementUtils();
-    typeUtils = env.getTypeUtils();
+    elements = env.getElementUtils();
+    types = env.getTypeUtils();
     filer = env.getFiler();
-
-    Map<String, String> options = env.getOptions();
-    if (options.containsKey(OPTION_PACKAGE)) {
-      outPackage = options.get(OPTION_PACKAGE);
-    } else {
-      outPackage = DEFAULT_OUT_PACKAGE;
-    }
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
@@ -94,7 +76,7 @@ public class SchematicProcessor extends AbstractProcessor {
   private void processDatabases(RoundEnvironment env) {
     for (Element database : env.getElementsAnnotatedWith(Database.class)) {
       try {
-        DatabaseWriter writer = new DatabaseWriter(processingEnv, database, outPackage);
+        DatabaseWriter writer = new DatabaseWriter(processingEnv, elements, database);
         writer.writeJava(filer);
         writer.writeValues(filer);
       } catch (IOException e) {
@@ -105,7 +87,7 @@ public class SchematicProcessor extends AbstractProcessor {
 
     for (Element provider : env.getElementsAnnotatedWith(ContentProvider.class)) {
       try {
-        new ContentProviderWriter(processingEnv, provider, outPackage).write(filer);
+        new ContentProviderWriter(processingEnv, elements, provider).write(filer);
       } catch (IOException e) {
         error("Unable to process " + provider.asType().getKind().name());
         throw new RuntimeException(e);

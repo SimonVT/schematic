@@ -64,13 +64,11 @@ public class DatabaseWriter {
 
   String outPackage;
 
-  public DatabaseWriter(ProcessingEnvironment env, Element database, String outPackage) {
+  public DatabaseWriter(ProcessingEnvironment env, Elements elements, Element database) {
     this.processingEnv = env;
     this.elementUtils = env.getElementUtils();
 
     this.database = database;
-
-    this.outPackage = outPackage;
 
     String databaseSchematicName = database.getSimpleName().toString();
 
@@ -80,6 +78,11 @@ public class DatabaseWriter {
     this.className = db.className();
     if (className.trim().isEmpty()) {
       this.className = databaseSchematicName;
+    }
+
+    this.outPackage = db.packageName();
+    if (outPackage.trim().isEmpty()) {
+      this.outPackage = elements.getPackageOf(database).getQualifiedName() + ".generated";
     }
 
     this.fileName = db.fileName();

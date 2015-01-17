@@ -23,7 +23,8 @@ import net.simonvt.schematic.annotation.OnCreate;
 import net.simonvt.schematic.annotation.OnUpgrade;
 import net.simonvt.schematic.annotation.Table;
 
-@Database(version = NotesDatabase.VERSION)
+@Database(version = NotesDatabase.VERSION,
+    packageName = "net.simonvt.schematic.sample.provider")
 public final class NotesDatabase {
 
   private NotesDatabase() {

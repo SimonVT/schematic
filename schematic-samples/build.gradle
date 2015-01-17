@@ -20,12 +20,6 @@ dependencies {
   compile parent.libraries.butterknife
 }
 
-apt {
-  arguments {
-    schematicOutPackage 'net.simonvt.schematic.sample.provider'
-  }
-}
-
 android {
   compileSdkVersion parent.ext.compileSdkVersion
   buildToolsVersion parent.ext.buildToolsVersion

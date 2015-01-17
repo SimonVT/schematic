@@ -42,5 +42,7 @@ public @interface Database {
 
   String fileName() default "";
 
+  String packageName() default "";
+
   int version();
 }
