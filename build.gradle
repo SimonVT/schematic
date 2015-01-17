@@ -9,22 +9,22 @@ ext {
   versionName = '0.5.4'
 
   minSdkVersion = 15
-  targetSdkVersion = 19
+  targetSdkVersion = 21
 
-  compileSdkVersion = 19
-  buildToolsVersion = '20.0.0'
+  compileSdkVersion = 21
+  buildToolsVersion = '21.1.2'
 }
 
 ext.libraries = [
-  androidGradle: 'com.android.tools.build:gradle:0.13.+',
+  androidGradle: 'com.android.tools.build:gradle:1.0.+',
 
   androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.4',
 
-  javawriter: 'com.squareup:javawriter:2.5.0',
+  javawriter: 'com.squareup:javawriter:2.5.1',
 
-  supportv4: 'com.android.support:support-v4:19.1.+',
+  supportv4: 'com.android.support:support-v4:21.0.+',
 
-  butterknife: 'com.jakewharton:butterknife:5.1.2',
+  butterknife: 'com.jakewharton:butterknife:6.0.0',
 
-  guava: 'com.google.guava:guava:17.0'
+  guava: 'com.google.guava:guava:18.0'
 ]
