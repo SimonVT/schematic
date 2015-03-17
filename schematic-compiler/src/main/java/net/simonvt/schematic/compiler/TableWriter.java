@@ -145,6 +145,26 @@ public class TableWriter {
       Unique unique = element.getAnnotation(Unique.class);
       if (unique != null) {
         query.append(" ").append("UNIQUE");
+        if (unique.onConflict() != Unique.ConflictResolutionType.NONE) {
+          query.append(" ON CONFLICT ");
+          switch (unique.onConflict()) {
+            case ROLLBACK:
+              query.append("ROLLBACK");
+              break;
+            case ABORT:
+              query.append("ABORT");
+              break;
+            case FAIL:
+              query.append("FAIL");
+              break;
+            case IGNORE:
+              query.append("IGNORE");
+              break;
+            case REPLACE:
+              query.append("REPLACE");
+              break;
+          }
+        }
       }
 
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
