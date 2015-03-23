@@ -57,8 +57,8 @@ Including in your project
 I recommend using the android-apt plugin. It doesn't include the compiler artifact in the final apk,
 and also sets the source paths so AS picks it up the generated classes.
 
-```
-apply plugin: 'android'
+```groovy
+apply plugin: 'com.android.application'
 apply plugin: 'android-apt'
 
 buildscript {
@@ -67,8 +67,8 @@ buildscript {
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:0.10.+'
-    classpath 'com.neenbedankt.gradle.plugins:android-apt:1.2'
+    classpath 'com.android.tools.build:gradle:{latest-version}'
+    classpath 'com.neenbedankt.gradle.plugins:{latest-version}'
   }
 }
 
