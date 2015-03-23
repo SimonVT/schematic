@@ -19,7 +19,7 @@ public interface ListColumns {
 ```
 
 
-Then create a database that uses this column
+Then create a database that uses this column.
 
 ```java
 @Database(version = NotesDatabase.VERSION)
@@ -32,7 +32,7 @@ public final class NotesDatabase {
 ```
 
 
-And finally define a ContentProvider
+Finally, define a ContentProvider.
 
 ```java
 @ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
@@ -43,31 +43,31 @@ public final class NotesProvider {
   @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
 
     @ContentUri(
-        path = Path.LISTS,
-        type = "vnd.android.cursor.dir/list",
-        defaultSort = ListColumns.TITLE + " ASC")
-    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists")
+            path = "lists",
+            type = "vnd.android.cursor.dir/list",
+            defaultSort = ListColumns.TITLE + " ASC")
+    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
   }
+}
 ```
 
 
 Including in your project
 =========================
 
-I recommend using the android-apt plugin. It doesn't include the compiler artifact in the final apk,
-and also sets the source paths so AS picks it up the generated classes.
+I recommend using the android-apt plugin. It doesn't include the compiler artifact in the final apk, and also sets the source paths so AS picks up the generated classes.
 
-```
-apply plugin: 'android'
+```groovy
+apply plugin: 'com.android.application'
 apply plugin: 'android-apt'
 
 buildscript {
   repositories {
-    mavenCentral()
+    jcenter()
   }
 
   dependencies {
-    classpath 'com.android.tools.build:gradle:0.10.+'
+    classpath 'com.android.tools.build:gradle:0.14.+'
     classpath 'com.neenbedankt.gradle.plugins:android-apt:1.2'
   }
 }
