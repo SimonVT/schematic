@@ -17,11 +17,20 @@ package net.simonvt.schematic.compiler;
 
 import com.google.common.base.CaseFormat;
 import com.squareup.javawriter.JavaWriter;
+
+import net.simonvt.schematic.annotation.Database;
+import net.simonvt.schematic.annotation.ExecOnCreate;
+import net.simonvt.schematic.annotation.OnConfigure;
+import net.simonvt.schematic.annotation.OnCreate;
+import net.simonvt.schematic.annotation.OnUpgrade;
+import net.simonvt.schematic.annotation.Table;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -34,11 +43,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
-import net.simonvt.schematic.annotation.Database;
-import net.simonvt.schematic.annotation.ExecOnCreate;
-import net.simonvt.schematic.annotation.OnCreate;
-import net.simonvt.schematic.annotation.OnUpgrade;
-import net.simonvt.schematic.annotation.Table;
 
 public class DatabaseWriter {
 
@@ -59,6 +63,8 @@ public class DatabaseWriter {
   ExecutableElement onCreate;
 
   ExecutableElement onUpgrade;
+
+  ExecutableElement onConfigure;
 
   int version;
 
@@ -121,6 +127,15 @@ public class DatabaseWriter {
         }
 
         this.onUpgrade = (ExecutableElement) enclosedElement;
+      }
+
+      OnConfigure onConfigure = enclosedElement.getAnnotation(OnConfigure.class);
+      if (onConfigure != null) {
+        if (this.onConfigure != null) {
+          error("Multiple OnUpgrade annotations found in " + database.getSimpleName().toString());
+        }
+
+        this.onConfigure = (ExecutableElement) enclosedElement;
       }
 
       ExecOnCreate execOnCreate = enclosedElement.getAnnotation(ExecOnCreate.class);
@@ -222,7 +237,7 @@ public class DatabaseWriter {
 
     writer.emitAnnotation(Override.class)
         .beginMethod("void", "onUpgrade", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db",
-            "int", "oldVersion", "int", "newVersion");
+                "int", "oldVersion", "int", "newVersion");
 
     if (onUpgrade != null) {
       List<? extends VariableElement> parameters = onUpgrade.getParameters();
@@ -260,7 +275,40 @@ public class DatabaseWriter {
     }
     writer.endMethod();
 
+    writeOnConfigure(writer);
+
     writer.endType().close();
+  }
+
+  public void writeOnConfigure(JavaWriter writer) throws IOException {
+    if (onConfigure != null) {
+      writer.emitEmptyLine()
+              .emitAnnotation(Override.class)
+              .beginMethod("void", "onConfigure", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db");
+
+      List<? extends VariableElement> parameters = onConfigure.getParameters();
+      StringBuilder params = new StringBuilder();
+      boolean first = true;
+      for (VariableElement param : parameters) {
+        if (first) {
+          first = false;
+        } else {
+          params.append(", ");
+        }
+        TypeMirror paramType = param.asType();
+        String typeAsString = paramType.toString();
+        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
+          params.append("db");
+        }
+      }
+
+      String parent = ((TypeElement) onConfigure.getEnclosingElement()).getQualifiedName().toString();
+      String methodName = onConfigure.getSimpleName().toString();
+
+      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
+      writer.endMethod();
+    }
+
   }
 
   public void writeValues(Filer filer) throws IOException {
