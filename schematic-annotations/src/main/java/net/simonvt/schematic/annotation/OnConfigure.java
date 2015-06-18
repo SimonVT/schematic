@@ -25,7 +25,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 /**
  * Method to be called when configuring the database.
  * <pre>{@code
- * &#064;OnUpgrade public static void onUpgrade(SQLiteDatabase db) {
+ * &#064;OnConfigure public static void onConfigure(SQLiteDatabase db) {
  *   ...
  * }
  * }</pre>
