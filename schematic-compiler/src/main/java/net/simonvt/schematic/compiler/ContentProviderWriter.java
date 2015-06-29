@@ -510,6 +510,7 @@ public class ContentProviderWriter {
         .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
             "database.getWritableDatabase()")
         .emitStatement("db.beginTransaction()")
+        .beginControlFlow("try")
         .emitEmptyLine();
 
     writer.beginControlFlow("switch(MATCHER.match(uri))");
@@ -525,7 +526,9 @@ public class ContentProviderWriter {
 
     writer.emitEmptyLine()
         .emitStatement("db.setTransactionSuccessful()")
+        .nextControlFlow("finally")
         .emitStatement("db.endTransaction()")
+        .endControlFlow()
         .emitStatement("getContext().getContentResolver().notifyChange(uri, null)")
         .emitStatement("return values.length")
         .endMethod()
@@ -536,10 +539,14 @@ public class ContentProviderWriter {
         .beginMethod("ContentProviderResult[]", "applyBatch", EnumSet.of(Modifier.PUBLIC),
             Arrays.asList("ArrayList<ContentProviderOperation>", "ops"),
             Arrays.asList("OperationApplicationException"))
+        .emitStatement("ContentProviderResult[] results")
         .emitStatement("database.getWritableDatabase().beginTransaction()")
-        .emitStatement("ContentProviderResult[] results = super.applyBatch(ops)")
+        .beginControlFlow("try")
+        .emitStatement("results = super.applyBatch(ops)")
         .emitStatement("database.getWritableDatabase().setTransactionSuccessful()")
+        .nextControlFlow("finally")
         .emitStatement("database.getWritableDatabase().endTransaction()")
+        .endControlFlow()
         .emitStatement("return results")
         .endMethod();
 
