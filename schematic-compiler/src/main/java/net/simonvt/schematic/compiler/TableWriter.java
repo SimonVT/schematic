@@ -34,6 +34,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.AutoIncrement;
+import net.simonvt.schematic.annotation.ConflictResolutionType;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DefaultValue;
 import net.simonvt.schematic.annotation.NotNull;
@@ -130,6 +131,7 @@ public class TableWriter {
       NotNull notNull = element.getAnnotation(NotNull.class);
       if (notNull != null) {
         query.append(" ").append("NOT NULL");
+        writeOnConflict(query, notNull.onConflict());
       }
 
       DefaultValue defaultValue = element.getAnnotation(DefaultValue.class);
@@ -140,31 +142,13 @@ public class TableWriter {
       PrimaryKey primary = element.getAnnotation(PrimaryKey.class);
       if (primary != null && primaryKeyCount == 1) {
         query.append(" ").append("PRIMARY KEY");
+        writeOnConflict(query, primary.onConflict());
       }
 
       Unique unique = element.getAnnotation(Unique.class);
       if (unique != null) {
         query.append(" ").append("UNIQUE");
-        if (unique.onConflict() != Unique.ConflictResolutionType.NONE) {
-          query.append(" ON CONFLICT ");
-          switch (unique.onConflict()) {
-            case ROLLBACK:
-              query.append("ROLLBACK");
-              break;
-            case ABORT:
-              query.append("ABORT");
-              break;
-            case FAIL:
-              query.append("FAIL");
-              break;
-            case IGNORE:
-              query.append("IGNORE");
-              break;
-            case REPLACE:
-              query.append("REPLACE");
-              break;
-          }
-        }
+        writeOnConflict(query, unique.onConflict());
       }
 
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
@@ -208,6 +192,29 @@ public class TableWriter {
         EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), query.toString());
 
     //writer.emitStatement("db.execSQL(\"%s\")", query.toString());
+  }
+
+  private static void writeOnConflict(StringBuilder query, ConflictResolutionType conflictResolution) {
+    if (conflictResolution != ConflictResolutionType.NONE) {
+      query.append(" ON CONFLICT ");
+      switch (conflictResolution) {
+        case ROLLBACK:
+          query.append("ROLLBACK");
+          break;
+        case ABORT:
+          query.append("ABORT");
+          break;
+        case FAIL:
+          query.append("FAIL");
+          break;
+        case IGNORE:
+          query.append("IGNORE");
+          break;
+        case REPLACE:
+          query.append("REPLACE");
+          break;
+      }
+    }
   }
 
   public void createValuesBuilder(Filer filer, String outPackage) {
