@@ -27,4 +27,8 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface PrimaryKey {
+    /**
+     * Defines conflict resolution algorithm. Will be ignored if there are multiple PrimaryKey annotations
+     */
+    ConflictResolutionType onConflict() default ConflictResolutionType.NONE;
 }

@@ -27,14 +27,9 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface Unique {
+  /**
+   * Defines conflict resolution algorithm.
+   */
   ConflictResolutionType onConflict() default ConflictResolutionType.NONE;
 
-  public enum ConflictResolutionType {
-    NONE,
-    ROLLBACK,
-    ABORT,
-    FAIL,
-    IGNORE,
-    REPLACE,
-  }
 }
