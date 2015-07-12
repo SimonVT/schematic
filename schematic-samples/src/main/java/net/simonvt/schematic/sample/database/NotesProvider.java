@@ -26,6 +26,7 @@ import net.simonvt.schematic.annotation.ContentProvider;
 import net.simonvt.schematic.annotation.ContentUri;
 import net.simonvt.schematic.annotation.InexactContentUri;
 import net.simonvt.schematic.annotation.MapColumns;
+import net.simonvt.schematic.annotation.NotifyBulkInsert;
 import net.simonvt.schematic.annotation.NotifyDelete;
 import net.simonvt.schematic.annotation.NotifyInsert;
 import net.simonvt.schematic.annotation.NotifyUpdate;
@@ -128,6 +129,12 @@ public final class NotesProvider {
       final long listId = values.getAsLong(NoteColumns.LIST_ID);
       return new Uri[] {
           Lists.withId(listId), fromList(listId),
+      };
+    }
+
+    @NotifyBulkInsert(paths = Path.NOTES) public static Uri[] onBulkInsert(Context context, Uri uri, ContentValues[] values, long[] ids) {
+      return new Uri[] {
+          uri,
       };
     }
 

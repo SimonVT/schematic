@@ -45,6 +45,7 @@ import net.simonvt.schematic.annotation.InexactContentUri;
 import net.simonvt.schematic.annotation.InsertUri;
 import net.simonvt.schematic.annotation.MapColumns;
 import net.simonvt.schematic.annotation.NotificationUri;
+import net.simonvt.schematic.annotation.NotifyBulkInsert;
 import net.simonvt.schematic.annotation.NotifyDelete;
 import net.simonvt.schematic.annotation.NotifyInsert;
 import net.simonvt.schematic.annotation.NotifyUpdate;
@@ -118,6 +119,7 @@ public class ContentProviderWriter {
   String databaseName;
 
   ExecutableElement defaultNotifyInsert;
+  ExecutableElement defaultNotifyBulkInsert;
   ExecutableElement defaultNotifyUpdate;
   ExecutableElement defaultNotifyDelete;
 
@@ -125,6 +127,7 @@ public class ContentProviderWriter {
   List<String> paths = new ArrayList<String>();
   Map<String, Element> notificationUris = new HashMap<String, Element>();
   Map<String, ExecutableElement> notifyInsert = new HashMap<String, ExecutableElement>();
+  Map<String, ExecutableElement> notifyBulkInsert = new HashMap<String, ExecutableElement>();
   Map<String, ExecutableElement> notifyUpdate = new HashMap<String, ExecutableElement>();
   Map<String, ExecutableElement> notifyDelete = new HashMap<String, ExecutableElement>();
   Map<String, ExecutableElement> whereCalls = new HashMap<String, ExecutableElement>();
@@ -174,6 +177,10 @@ public class ContentProviderWriter {
       NotifyInsert defaultNotifyInsert = enclosedElement.getAnnotation(NotifyInsert.class);
       if (defaultNotifyInsert != null) {
         this.defaultNotifyInsert = (ExecutableElement) enclosedElement;
+      }
+      NotifyBulkInsert defaultNotifyBulkInsert = enclosedElement.getAnnotation(NotifyBulkInsert.class);
+      if (defaultNotifyBulkInsert != null) {
+        this.defaultNotifyBulkInsert = (ExecutableElement) enclosedElement;
       }
       NotifyUpdate defaultNotifyUpdate = enclosedElement.getAnnotation(NotifyUpdate.class);
       if (defaultNotifyUpdate != null) {
@@ -340,6 +347,14 @@ public class ContentProviderWriter {
             }
           }
 
+          NotifyBulkInsert notifyBulkInsert = element.getAnnotation(NotifyBulkInsert.class);
+          if (notifyBulkInsert != null) {
+            String[] paths = notifyBulkInsert.paths();
+            for (String path : paths) {
+              this.notifyBulkInsert.put(path, (ExecutableElement) element);
+            }
+          }
+
           NotifyUpdate notifyUpdate = element.getAnnotation(NotifyUpdate.class);
           if (notifyUpdate != null) {
             String[] paths = notifyUpdate.paths();
@@ -494,14 +509,17 @@ public class ContentProviderWriter {
 
     writer.emitStatement("return builder").endMethod().emitEmptyLine();
 
-    writer.beginMethod("void", "insertValues", EnumSet.of(Modifier.PRIVATE), "SQLiteDatabase", "db",
-        "String", "table", "ContentValues[]", "values");
+    writer.beginMethod("long[]", "insertValues", EnumSet.of(Modifier.PRIVATE), "SQLiteDatabase",
+        "db", "String", "table", "ContentValues[]", "values");
 
-    writer.beginControlFlow("for (ContentValues cv : values)")
+    writer.emitStatement("long[] ids = new long[values.length]");
+
+    writer.beginControlFlow("for (int i = 0; i < values.length; i++)")
+        .emitStatement("ContentValues cv = values[i]")
         .emitStatement("db.insertOrThrow(table, null, cv)")
         .endControlFlow();
 
-    writer.endMethod().emitEmptyLine();
+    writer.emitStatement("return ids").endMethod().emitEmptyLine();
 
     // Bulk insert
     writer.emitAnnotation(Override.class)
@@ -517,8 +535,16 @@ public class ContentProviderWriter {
     for (UriContract uri : uris) {
       if (uri.allowInsert) {
         writer.beginControlFlow("case " + uri.name + ":")
-            .emitStatement("insertValues(db, \"%s\", values)", uri.table)
-            .emitStatement("break")
+            .emitStatement("long[] ids = insertValues(db, \"%s\", values)", uri.table);
+
+        if ((uri.path != null && notifyBulkInsert.containsKey(uri.path))
+            || defaultNotifyBulkInsert != null) {
+          printNotifyBulkInsert(writer, uri);
+        } else {
+          writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
+        }
+
+        writer.emitStatement("break")
             .endControlFlow();
       }
     }
@@ -529,7 +555,6 @@ public class ContentProviderWriter {
         .nextControlFlow("finally")
         .emitStatement("db.endTransaction()")
         .endControlFlow()
-        .emitStatement("getContext().getContentResolver().notifyChange(uri, null)")
         .emitStatement("return values.length")
         .endMethod()
         .emitEmptyLine();
@@ -699,52 +724,7 @@ public class ContentProviderWriter {
 
         if ((uri.path != null && notifyInsert.containsKey(uri.path))
             || defaultNotifyInsert != null) {
-          ExecutableElement notifyMethod = notifyInsert.get(uri.path);
-          if (notifyMethod == null) {
-            notifyMethod = defaultNotifyInsert;
-          }
-
-          String parent =
-              ((TypeElement) notifyMethod.getEnclosingElement()).getQualifiedName().toString();
-          String methodName = notifyMethod.getSimpleName().toString();
-
-          List<? extends VariableElement> parameters = notifyMethod.getParameters();
-          StringBuilder params = new StringBuilder();
-          boolean first = true;
-          for (VariableElement param : parameters) {
-            if (first) {
-              first = false;
-            } else {
-              params.append(", ");
-            }
-            TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.content.Context".equals(typeAsString)) {
-              params.append("getContext()");
-            }
-            if ("android.net.Uri".equals(typeAsString)) {
-              params.append("uri");
-            }
-            if ("android.content.ContentValues".equals(typeAsString)) {
-              params.append("values");
-            }
-            if ("long".equals(typeAsString)) {
-              params.append("id");
-            }
-            if ("java.lang.String".equals(typeAsString)) {
-              params.append("where");
-            }
-            if ("java.lang.String[]".equals(typeAsString)) {
-              params.append("whereArgs");
-            }
-          }
-
-          writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
-              params.toString());
-
-          writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
-              .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
-              .endControlFlow();
+          printNotifyInsert(writer, uri);
         } else {
           writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
         }
@@ -1036,6 +1016,98 @@ public class ContentProviderWriter {
 
     writer.endType();
     writer.close();
+  }
+
+  private void printNotifyInsert(JavaWriter writer, UriContract uri) throws IOException {
+    ExecutableElement notifyMethod = notifyInsert.get(uri.path);
+    if (notifyMethod == null) {
+      notifyMethod = defaultNotifyInsert;
+    }
+
+    String parent =
+        ((TypeElement) notifyMethod.getEnclosingElement()).getQualifiedName().toString();
+    String methodName = notifyMethod.getSimpleName().toString();
+
+    List<? extends VariableElement> parameters = notifyMethod.getParameters();
+    StringBuilder params = new StringBuilder();
+    boolean first = true;
+    for (VariableElement param : parameters) {
+      if (first) {
+        first = false;
+      } else {
+        params.append(", ");
+      }
+      TypeMirror paramType = param.asType();
+      String typeAsString = paramType.toString();
+      if ("android.content.Context".equals(typeAsString)) {
+        params.append("getContext()");
+      }
+      if ("android.net.Uri".equals(typeAsString)) {
+        params.append("uri");
+      }
+      if ("android.content.ContentValues".equals(typeAsString)) {
+        params.append("values");
+      }
+      if ("long".equals(typeAsString)) {
+        params.append("id");
+      }
+      if ("java.lang.String".equals(typeAsString)) {
+        params.append("where");
+      }
+      if ("java.lang.String[]".equals(typeAsString)) {
+        params.append("whereArgs");
+      }
+    }
+
+    writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
+        params.toString());
+
+    writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
+        .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
+        .endControlFlow();
+  }
+
+  private void printNotifyBulkInsert(JavaWriter writer, UriContract uri) throws IOException {
+    ExecutableElement notifyMethod = notifyBulkInsert.get(uri.path);
+    if (notifyMethod == null) {
+      notifyMethod = defaultNotifyBulkInsert;
+    }
+
+    String parent =
+        ((TypeElement) notifyMethod.getEnclosingElement()).getQualifiedName().toString();
+    String methodName = notifyMethod.getSimpleName().toString();
+
+    List<? extends VariableElement> parameters = notifyMethod.getParameters();
+    StringBuilder params = new StringBuilder();
+    boolean first = true;
+    for (VariableElement param : parameters) {
+      if (first) {
+        first = false;
+      } else {
+        params.append(", ");
+      }
+      TypeMirror paramType = param.asType();
+      String typeAsString = paramType.toString();
+      if ("android.content.Context".equals(typeAsString)) {
+        params.append("getContext()");
+      }
+      if ("android.net.Uri".equals(typeAsString)) {
+        params.append("uri");
+      }
+      if ("android.content.ContentValues[]".equals(typeAsString)) {
+        params.append("values");
+      }
+      if ("long[]".equals(typeAsString)) {
+        params.append("ids");
+      }
+    }
+
+    writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
+        params.toString());
+
+    writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
+        .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
+        .endControlFlow();
   }
 
   private String getFileName() {
