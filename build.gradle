@@ -16,13 +16,13 @@ ext {
 }
 
 ext.libraries = [
-  androidGradle: 'com.android.tools.build:gradle:1.1.3',
+  androidGradle: 'com.android.tools.build:gradle:1.2.3',
 
-  androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.4',
+  androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.5.1',
 
   javawriter: 'com.squareup:javawriter:2.5.1',
 
-  supportv4: 'com.android.support:support-v4:22.0.+',
+  supportv4: 'com.android.support:support-v4:22.2.0',
 
   butterknife: 'com.jakewharton:butterknife:6.0.0',
 
