@@ -37,6 +37,10 @@ android {
     versionName = parent.ext.versionName
   }
 
+  lintOptions {
+    abortOnError false
+  }
+
   packagingOptions {
     exclude 'META-INF/services/javax.annotation.processing.Processor'
   }

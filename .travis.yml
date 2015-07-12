@@ -1,10 +1,16 @@
 language: android
 
-jdk: oraclejdk7
+jdk:
+ - oraclejdk7
+ - oraclejdk8
 
 android:
   components:
-    - build-tools-20.0.0
+    - platform-tools
+    - tools
+    - build-tools-22.0.1
+    - android-22
+    - extra-android-m2repository
 
 before_install:
   - TERM=dumb
@@ -14,4 +20,5 @@ install:
 
 script:
   - ./gradlew checkDebug
-  - ./gradlew check
+
+sudo: false

@@ -1,7 +1,7 @@
 package net.simonvt.schematic.annotation;
 
 /**
- * conflict resolution algorithms
+ * Conflict resolution algorithms.
  */
 public enum ConflictResolutionType {
   NONE,

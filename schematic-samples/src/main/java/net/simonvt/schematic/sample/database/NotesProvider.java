@@ -132,7 +132,8 @@ public final class NotesProvider {
       };
     }
 
-    @NotifyBulkInsert(paths = Path.NOTES) public static Uri[] onBulkInsert(Context context, Uri uri, ContentValues[] values, long[] ids) {
+    @NotifyBulkInsert(paths = Path.NOTES)
+    public static Uri[] onBulkInsert(Context context, Uri uri, ContentValues[] values, long[] ids) {
       return new Uri[] {
           uri,
       };
