@@ -36,6 +36,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.ExecOnCreate;
+import net.simonvt.schematic.annotation.OnConfigure;
 import net.simonvt.schematic.annotation.OnCreate;
 import net.simonvt.schematic.annotation.OnUpgrade;
 import net.simonvt.schematic.annotation.Table;
@@ -59,6 +60,8 @@ public class DatabaseWriter {
   ExecutableElement onCreate;
 
   ExecutableElement onUpgrade;
+
+  ExecutableElement onConfigure;
 
   int version;
 
@@ -121,6 +124,15 @@ public class DatabaseWriter {
         }
 
         this.onUpgrade = (ExecutableElement) enclosedElement;
+      }
+
+      OnConfigure onConfigure = enclosedElement.getAnnotation(OnConfigure.class);
+      if (onConfigure != null) {
+        if (this.onConfigure != null) {
+          error("Multiple OnConfigure annotations found in " + database.getSimpleName().toString());
+        }
+
+        this.onConfigure = (ExecutableElement) enclosedElement;
       }
 
       ExecOnCreate execOnCreate = enclosedElement.getAnnotation(ExecOnCreate.class);
@@ -259,6 +271,38 @@ public class DatabaseWriter {
       writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
     }
     writer.endMethod();
+
+    if (onConfigure != null) {
+      writer.emitEmptyLine()
+          .emitAnnotation(Override.class)
+          .beginMethod("void", "onConfigure", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db");
+
+      List<? extends VariableElement> parameters = onConfigure.getParameters();
+      StringBuilder params = new StringBuilder();
+      boolean first = true;
+      for (VariableElement param : parameters) {
+        if (first) {
+          first = false;
+        } else {
+          params.append(", ");
+        }
+        TypeMirror paramType = param.asType();
+        String typeAsString = paramType.toString();
+        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
+          params.append("db");
+        } else {
+          throw new IllegalArgumentException(
+              "OnConfigure does not support parameter " + typeAsString);
+        }
+      }
+
+      String parent =
+          ((TypeElement) onConfigure.getEnclosingElement()).getQualifiedName().toString();
+      String methodName = onConfigure.getSimpleName().toString();
+      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
+
+      writer.endMethod();
+    }
 
     writer.endType().close();
   }
