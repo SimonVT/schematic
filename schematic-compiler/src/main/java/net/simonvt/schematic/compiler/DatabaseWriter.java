@@ -21,7 +21,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -148,9 +150,10 @@ public class DatabaseWriter {
     JavaWriter writer = new JavaWriter(out);
     writer.emitPackage(outPackage);
 
-    writer.emitImports("android.content.Context")
-        .emitImports("android.database.sqlite.SQLiteOpenHelper")
-        .emitImports("android.database.sqlite.SQLiteDatabase");
+    Set<String> imports = new HashSet<>();
+    imports.add("android.content.Context");
+    imports.add("android.database.sqlite.SQLiteOpenHelper");
+    imports.add("android.database.sqlite.SQLiteDatabase");
 
     for (VariableElement table : tables) {
       TypeElement tableClass = null;
@@ -162,8 +165,10 @@ public class DatabaseWriter {
         tableClass = (TypeElement) processingEnv.getTypeUtils().asElement(mirror);
       }
 
-      writer.emitImports(tableClass.getQualifiedName().toString());
+      imports.add(tableClass.getQualifiedName().toString());
     }
+
+    writer.emitImports(imports);
 
     writer.emitEmptyLine();
 
