@@ -67,8 +67,7 @@ public class SchematicProcessor extends AbstractProcessor {
     return SourceVersion.latestSupported();
   }
 
-  @Override
-  public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
+  @Override public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
     processDatabases(env);
     return true;
   }

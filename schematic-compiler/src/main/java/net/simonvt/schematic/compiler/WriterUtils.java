@@ -1,8 +1,9 @@
 package net.simonvt.schematic.compiler;
 
-import com.squareup.javawriter.JavaWriter;
-import java.io.IOException;
-import java.util.EnumSet;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 import javax.lang.model.element.Modifier;
 
 public final class WriterUtils {
@@ -10,36 +11,47 @@ public final class WriterUtils {
   private WriterUtils() {
   }
 
-  public static void singleton(JavaWriter writer, String className, String... params)
-      throws IOException {
-    writer.emitField(className, "instance",
-        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.VOLATILE)).emitEmptyLine();
+  public static void singleton(TypeSpec.Builder typeSpec, ClassName className,
+      ClassName... params) {
+    FieldSpec instance = FieldSpec.builder(className, "instance", Modifier.PRIVATE, Modifier.STATIC,
+        Modifier.VOLATILE).build();
+    typeSpec.addField(instance);
 
     StringBuilder paramsBuilder = new StringBuilder();
     boolean first = true;
     int size = params.length;
-    for (int i = 1; i < size; i += 2) {
+
+    for (ClassName param : params) {
       if (!first) {
         paramsBuilder.append(", ");
       } else {
         first = false;
       }
 
-      paramsBuilder.append(params[i]);
+      String simpleName = param.simpleName();
+      String paramName = Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+      paramsBuilder.append(paramName);
     }
 
-    writer.beginMethod(className, "getInstance", EnumSet.of(Modifier.PUBLIC, Modifier.STATIC),
-        params)
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("getInstance")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(className);
+
+    for (ClassName param : params) {
+      String simpleName = param.simpleName();
+      String paramName = Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
+      spec.addParameter(param, paramName);
+    }
+
+    spec.beginControlFlow("if (instance == null)")
+        .beginControlFlow("synchronized ($T.class)", className)
         .beginControlFlow("if (instance == null)")
-        .beginControlFlow("synchronized (" + className + ".class)")
-        .beginControlFlow("if (instance == null)")
-        .emitStatement("instance = new %s(%s)", className, paramsBuilder.toString())
+        .addStatement("instance = new $T($L)", className, paramsBuilder.toString())
         .endControlFlow()
         .endControlFlow()
         .endControlFlow()
-        .emitEmptyLine()
-        .emitStatement("return instance")
-        .endMethod()
-        .emitEmptyLine();
+        .addStatement("return instance");
+
+    typeSpec.addMethod(spec.build());
   }
 }

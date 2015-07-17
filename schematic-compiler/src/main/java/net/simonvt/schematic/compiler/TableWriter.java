@@ -17,11 +17,14 @@
 package net.simonvt.schematic.compiler;
 
 import com.google.common.base.CaseFormat;
-import com.squareup.javawriter.JavaWriter;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -103,7 +106,10 @@ public class TableWriter {
     }
   }
 
-  public void createTable(JavaWriter writer) throws IOException {
+  public void createTable(TypeSpec.Builder databaseBuilder, ClassName tableClassName)
+      throws IOException {
+    List<ClassName> classes = new ArrayList<>();
+
     StringBuilder query = new StringBuilder("\"CREATE TABLE " + name + " (");
 
     final int primaryKeyCount = primaryKeys.size();
@@ -121,11 +127,11 @@ public class TableWriter {
       DataType dataType = element.getAnnotation(DataType.class);
 
       String columnName = element.getConstantValue().toString();
-      query.append(" + ")
-          .append(columnsClass.getSimpleName().toString())
-          .append(".")
-          .append(element.getSimpleName().toString())
-          .append(" + ");
+      query.append(" + ").append("$T");
+
+      classes.add(tableClassName);
+
+      query.append(".").append(element.getSimpleName().toString()).append(" + ");
       query.append("\" ").append(dataType.value());
 
       NotNull notNull = element.getAnnotation(NotNull.class);
@@ -188,13 +194,16 @@ public class TableWriter {
 
     query.append(")\"");
 
-    writer.emitField("String", table.getSimpleName().toString(),
-        EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), query.toString());
+    FieldSpec tableSpec = FieldSpec.builder(String.class, table.getSimpleName().toString())
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+        .initializer(query.toString(), classes.toArray())
+        .build();
 
-    //writer.emitStatement("db.execSQL(\"%s\")", query.toString());
+    databaseBuilder.addField(tableSpec);
   }
 
-  private static void writeOnConflict(StringBuilder query, ConflictResolutionType conflictResolution) {
+  private static void writeOnConflict(StringBuilder query,
+      ConflictResolutionType conflictResolution) {
     if (conflictResolution != ConflictResolutionType.NONE) {
       query.append(" ON CONFLICT ");
       switch (conflictResolution) {
@@ -217,90 +226,91 @@ public class TableWriter {
     }
   }
 
-  public void createValuesBuilder(Filer filer, String outPackage) {
-    try {
-      String name = Character.toUpperCase(this.name.charAt(0)) + this.name.substring(1);
-      String className = name + "ValuesBuilder";
-      String qualifiedName = outPackage + ".values." + className;
+  public void createValuesBuilder(Filer filer, String outPackage) throws IOException {
+    String name = Character.toUpperCase(this.name.charAt(0)) + this.name.substring(1);
+    String valuesPackage = outPackage + ".values";
+    String className = name + "ValuesBuilder";
+    String qualifiedName = outPackage + ".values." + className;
 
-      Writer out = null;
-      JavaFileObject jfo = filer.createSourceFile(qualifiedName);
-      out = jfo.openWriter();
+    JavaFileObject jfo = filer.createSourceFile(qualifiedName);
+    Writer out = jfo.openWriter();
 
-      JavaWriter writer = new JavaWriter(out);
+    TypeSpec.Builder valuesBuilder = TypeSpec.classBuilder(className).addModifiers(Modifier.PUBLIC);
 
-      writer.emitPackage(outPackage + ".values");
+    FieldSpec valuesSpec = FieldSpec.builder(Clazz.CONTENT_VALUES, "values")
+        .initializer("new $T()", Clazz.CONTENT_VALUES)
+        .build();
+    valuesBuilder.addField(valuesSpec);
 
-      writer.emitImports("android.content.ContentValues");
-      writer.emitImports(columnsClass.getQualifiedName().toString());
+    for (VariableElement element : columns) {
+      String elmName = element.getSimpleName().toString();
+      elmName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, elmName);
+      String colName = element.getConstantValue().toString();
 
-      writer.emitEmptyLine();
+      DataType dataType = element.getAnnotation(DataType.class);
+      DataType.Type type = dataType.value();
 
-      writer.beginType(className, "class", EnumSet.of(Modifier.PUBLIC)).emitEmptyLine();
+      String column = element.getSimpleName().toString();
 
-      writer.emitField("ContentValues", "values").emitEmptyLine();
+      switch (type) {
+        case INTEGER:
+          MethodSpec intSpec = MethodSpec.methodBuilder(elmName)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(ClassName.get(valuesPackage, className))
+              .addParameter(int.class, "value")
+              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
+              .addStatement("return this")
+              .build();
+          valuesBuilder.addMethod(intSpec);
 
-      writer.beginConstructor(EnumSet.of(Modifier.PUBLIC))
-          .emitStatement("values = new ContentValues()")
-          .endConstructor()
-          .emitEmptyLine();
+          MethodSpec longSpec = MethodSpec.methodBuilder(elmName)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(ClassName.get(valuesPackage, className))
+              .addParameter(long.class, "value")
+              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
+              .addStatement("return this")
+              .build();
+          valuesBuilder.addMethod(longSpec);
+          break;
 
-      for (VariableElement element : columns) {
-        String elmName = element.getSimpleName().toString();
-        elmName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, elmName);
-        String colName = element.getConstantValue().toString();
+        case REAL:
+          MethodSpec floatSpec = MethodSpec.methodBuilder(elmName)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(ClassName.get(valuesPackage, className))
+              .addParameter(float.class, "value")
+              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
+              .addStatement("return this")
+              .build();
+          valuesBuilder.addMethod(floatSpec);
+          break;
 
-        DataType dataType = element.getAnnotation(DataType.class);
-        DataType.Type type = dataType.value();
+        case TEXT:
+          MethodSpec stringSpec = MethodSpec.methodBuilder(elmName)
+              .addModifiers(Modifier.PUBLIC)
+              .returns(ClassName.get(valuesPackage, className))
+              .addParameter(String.class, "value")
+              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
+              .addStatement("return this")
+              .build();
+          valuesBuilder.addMethod(stringSpec);
+          break;
 
-        String colQualified =
-            columnsClass.getSimpleName().toString() + "." + element.getSimpleName().toString();
-
-        switch (type) {
-          case INTEGER:
-            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "int", "value")
-                .emitStatement("values.put(%s, value)", colQualified)
-                .emitStatement("return this")
-                .endMethod()
-                .emitEmptyLine();
-
-            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "long", "value")
-                .emitStatement("values.put(%s, value)", colQualified)
-                .emitStatement("return this")
-                .endMethod()
-                .emitEmptyLine();
-            break;
-
-          case REAL:
-            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "float", "value")
-                .emitStatement("values.put(%s, value)", colQualified)
-                .emitStatement("return this")
-                .endMethod()
-                .emitEmptyLine();
-            break;
-
-          case TEXT:
-            writer.beginMethod(className, elmName, EnumSet.of(Modifier.PUBLIC), "String", "value")
-                .emitStatement("values.put(%s, value)", colQualified)
-                .emitStatement("return this")
-                .endMethod()
-                .emitEmptyLine();
-            break;
-
-          case BLOB:
-            // TODO: What do I call here?
-            break;
-        }
+        case BLOB:
+          // TODO: What do I call here?
+          break;
       }
-
-      writer.beginMethod("ContentValues", "values", EnumSet.of(Modifier.PUBLIC))
-          .emitStatement("return values")
-          .endMethod();
-
-      writer.endType().close();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
+
+    valuesBuilder.addMethod(MethodSpec.methodBuilder("values")
+        .returns(Clazz.CONTENT_VALUES)
+        .addModifiers(Modifier.PUBLIC)
+        .addStatement("return values")
+        .build());
+
+    JavaFile javaFile = JavaFile.builder(valuesPackage, valuesBuilder.build()).build();
+    javaFile.writeTo(out);
+    out.flush();
+    out.close();
   }
 
   private void error(String error) {

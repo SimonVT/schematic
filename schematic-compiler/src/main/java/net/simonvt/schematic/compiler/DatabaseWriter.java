@@ -16,14 +16,16 @@
 package net.simonvt.schematic.compiler;
 
 import com.google.common.base.CaseFormat;
-import com.squareup.javawriter.JavaWriter;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -52,6 +54,8 @@ public class DatabaseWriter {
   Element database;
 
   String className;
+
+  ClassName clazzName;
 
   String fileName;
 
@@ -95,6 +99,8 @@ public class DatabaseWriter {
       this.fileName =
           CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, databaseSchematicName) + ".db";
     }
+
+    clazzName = ClassName.get(outPackage, className);
 
     findAnnotations(database);
   }
@@ -147,13 +153,15 @@ public class DatabaseWriter {
   public void writeJava(Filer filer) throws IOException {
     JavaFileObject jfo = filer.createSourceFile(getFileName());
     Writer out = jfo.openWriter();
-    JavaWriter writer = new JavaWriter(out);
-    writer.emitPackage(outPackage);
 
-    Set<String> imports = new HashSet<>();
-    imports.add("android.content.Context");
-    imports.add("android.database.sqlite.SQLiteOpenHelper");
-    imports.add("android.database.sqlite.SQLiteDatabase");
+    TypeSpec.Builder databaseBuilder = TypeSpec.classBuilder(className)
+        .superclass(Clazz.SQLITE_OPEN_HELPER)
+        .addModifiers(Modifier.PUBLIC);
+
+    FieldSpec versionSpec =
+        FieldSpec.builder(int.class, "DATABASE_VERSION", Modifier.PRIVATE, Modifier.STATIC,
+            Modifier.FINAL).initializer("$L", version).build();
+    databaseBuilder.addField(versionSpec);
 
     for (VariableElement table : tables) {
       TypeElement tableClass = null;
@@ -165,49 +173,52 @@ public class DatabaseWriter {
         tableClass = (TypeElement) processingEnv.getTypeUtils().asElement(mirror);
       }
 
-      imports.add(tableClass.getQualifiedName().toString());
-    }
+      ClassName tableClassName = ClassName.get(tableClass);
 
-    writer.emitImports(imports);
-
-    writer.emitEmptyLine();
-
-    writer.beginType(className, "class", EnumSet.of(Modifier.PUBLIC), "SQLiteOpenHelper")
-        .emitEmptyLine();
-
-    writer.emitField("int", "DATABASE_VERSION",
-        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL), String.valueOf(version))
-        .emitEmptyLine();
-
-    for (VariableElement table : tables) {
       TableWriter tableWriter = new TableWriter(processingEnv, table);
-      tableWriter.createTable(writer);
+      tableWriter.createTable(databaseBuilder, tableClassName);
       tableWriter.createValuesBuilder(filer, outPackage);
-      writer.emitEmptyLine();
     }
 
-    WriterUtils.singleton(writer, className, "Context", "context");
+    WriterUtils.singleton(databaseBuilder, clazzName, Clazz.CONTEXT);
 
-    writer.emitField("Context", "context", EnumSet.of(Modifier.PRIVATE));
+    databaseBuilder.addField(Clazz.CONTEXT, "context", Modifier.PRIVATE);
 
-    writer.beginConstructor(EnumSet.of(Modifier.PRIVATE), "Context", "context")
-        .emitStatement("super(context, \"%s\", null, DATABASE_VERSION)", fileName)
-        .emitStatement("this.context = context")
-        .endConstructor()
-        .emitEmptyLine();
+    MethodSpec constructor = MethodSpec.constructorBuilder()
+        .addModifiers(Modifier.PRIVATE)
+        .addParameter(Clazz.CONTEXT, "context")
+        .addStatement("super(context, $S, null, DATABASE_VERSION)", fileName)
+        .addStatement("this.context = context")
+        .build();
+    databaseBuilder.addMethod(constructor);
 
-    writer.emitAnnotation(Override.class)
-        .beginMethod("void", "onCreate", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db");
+    databaseBuilder.addMethod(getOnCreateSpec());
+    databaseBuilder.addMethod(getOnUpgradeSpec());
+
+    if (onConfigure != null) {
+      databaseBuilder.addMethod(getOnConfigureSpec());
+    }
+
+    JavaFile javaFile = JavaFile.builder(outPackage, databaseBuilder.build()).build();
+    javaFile.writeTo(out);
+    out.flush();
+    out.close();
+  }
+
+  private MethodSpec getOnCreateSpec() {
+    MethodSpec.Builder onCreateBuilder = MethodSpec.methodBuilder("onCreate")
+        .returns(void.class)
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .addParameter(Clazz.SQLITE_DATABASE, "db");
 
     for (VariableElement table : tables) {
-      writer.emitStatement("db.execSQL(%s)", table.getSimpleName().toString());
+      onCreateBuilder.addStatement("db.execSQL($L)", table.getSimpleName().toString());
     }
 
     for (VariableElement exec : execOnCreate) {
-      String parent = ((TypeElement) exec.getEnclosingElement()).getQualifiedName().toString();
       String variableName = exec.getSimpleName().toString();
-
-      writer.emitStatement("db.execSQL(%s.%s)", parent, variableName);
+      onCreateBuilder.addStatement("db.execSQL($T.$L)", exec.getEnclosingElement(), variableName);
     }
 
     if (onCreate != null) {
@@ -221,25 +232,29 @@ public class DatabaseWriter {
           params.append(", ");
         }
         TypeMirror paramType = param.asType();
-        String typeAsString = paramType.toString();
-        if ("android.content.Context".equals(typeAsString)) {
+        if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
           params.append("context");
         }
-        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
+        if (Clazz.SQLITE_DATABASE.equals(ClassName.get(paramType))) {
           params.append("db");
         }
       }
 
-      String parent = ((TypeElement) onCreate.getEnclosingElement()).getQualifiedName().toString();
       String methodName = onCreate.getSimpleName().toString();
-      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
+      onCreateBuilder.addStatement("$T.$L($L)", onCreate.getEnclosingElement(), methodName,
+          params.toString());
     }
 
-    writer.endMethod().emitEmptyLine();
+    return onCreateBuilder.build();
+  }
 
-    writer.emitAnnotation(Override.class)
-        .beginMethod("void", "onUpgrade", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db",
-            "int", "oldVersion", "int", "newVersion");
+  private MethodSpec getOnUpgradeSpec() {
+    MethodSpec.Builder onUpgradeBuilder = MethodSpec.methodBuilder("onUpgrade")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .addParameter(Clazz.SQLITE_DATABASE, "db")
+        .addParameter(int.class, "oldVersion")
+        .addParameter(int.class, "newVersion");
 
     if (onUpgrade != null) {
       List<? extends VariableElement> parameters = onUpgrade.getParameters();
@@ -251,15 +266,16 @@ public class DatabaseWriter {
         } else {
           params.append(", ");
         }
+
         TypeMirror paramType = param.asType();
-        String typeAsString = paramType.toString();
-        if ("android.content.Context".equals(typeAsString)) {
+
+        if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
           params.append("context");
         }
-        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
+        if (Clazz.SQLITE_DATABASE.equals(ClassName.get(paramType))) {
           params.append("db");
         }
-        if ("int".equals(typeAsString)) {
+        if (TypeName.get(int.class).equals(TypeName.get(paramType))) {
           String name = param.getSimpleName().toString();
           if ("oldVersion".equals(name)) {
             params.append("oldVersion");
@@ -273,52 +289,51 @@ public class DatabaseWriter {
 
       String parent = ((TypeElement) onUpgrade.getEnclosingElement()).getQualifiedName().toString();
       String methodName = onUpgrade.getSimpleName().toString();
-      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
+      onUpgradeBuilder.addStatement("$L.$L($L)", parent, methodName, params.toString());
     }
-    writer.endMethod();
 
-    if (onConfigure != null) {
-      writer.emitEmptyLine()
-          .emitAnnotation(Override.class)
-          .beginMethod("void", "onConfigure", EnumSet.of(Modifier.PUBLIC), "SQLiteDatabase", "db");
+    return onUpgradeBuilder.build();
+  }
 
-      List<? extends VariableElement> parameters = onConfigure.getParameters();
-      StringBuilder params = new StringBuilder();
-      boolean first = true;
-      for (VariableElement param : parameters) {
-        if (first) {
-          first = false;
-        } else {
-          params.append(", ");
-        }
-        TypeMirror paramType = param.asType();
-        String typeAsString = paramType.toString();
-        if ("android.database.sqlite.SQLiteDatabase".equals(typeAsString)) {
-          params.append("db");
-        } else {
-          throw new IllegalArgumentException(
-              "OnConfigure does not support parameter " + typeAsString);
-        }
+  private MethodSpec getOnConfigureSpec() {
+    MethodSpec.Builder onConfigureBuilder = MethodSpec.methodBuilder("onConfigure")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .addParameter(Clazz.SQLITE_DATABASE, "db");
+
+    List<? extends VariableElement> parameters = onConfigure.getParameters();
+    StringBuilder params = new StringBuilder();
+    boolean first = true;
+    for (VariableElement param : parameters) {
+      if (first) {
+        first = false;
+      } else {
+        params.append(", ");
       }
-
-      String parent =
-          ((TypeElement) onConfigure.getEnclosingElement()).getQualifiedName().toString();
-      String methodName = onConfigure.getSimpleName().toString();
-      writer.emitStatement("%s.%s(%s)", parent, methodName, params.toString());
-
-      writer.endMethod();
+      TypeMirror paramType = param.asType();
+      if (Clazz.SQLITE_DATABASE.equals(ClassName.get(paramType))) {
+        params.append("db");
+      } else {
+        throw new IllegalArgumentException(
+            "OnConfigure does not support parameter " + paramType.toString());
+      }
     }
 
-    writer.endType().close();
+    String parent = ((TypeElement) onConfigure.getEnclosingElement()).getQualifiedName().toString();
+    String methodName = onConfigure.getSimpleName().toString();
+    onConfigureBuilder.addStatement("$L.$L($L)", parent, methodName, params.toString());
+
+    return onConfigureBuilder.build();
   }
 
   public void writeValues(Filer filer) throws IOException {
     JavaFileObject jfo = filer.createSourceFile(getValuesFileName());
     Writer out = jfo.openWriter();
-    JavaWriter writer = new JavaWriter(out);
-    writer.emitPackage(outPackage + ".values");
 
-    writer.beginType(className + "Values", "class", EnumSet.of(Modifier.PUBLIC)).emitEmptyLine();
+    final String valuesPackage = outPackage + ".values";
+
+    TypeSpec.Builder spec =
+        TypeSpec.classBuilder(className + "Values").addModifiers(Modifier.PUBLIC);
 
     for (VariableElement table : tables) {
       Table tableAnnotation = table.getAnnotation(Table.class);
@@ -327,14 +342,21 @@ public class DatabaseWriter {
 
       String methodName = "for" + tableName;
       String valuesName = tableName + "ValuesBuilder";
+      ClassName builderClass = ClassName.get(valuesPackage, valuesName);
 
-      writer.beginMethod(valuesName, methodName, EnumSet.of(Modifier.PUBLIC))
-          .emitStatement("return new %s()", valuesName)
-          .endMethod()
-          .emitEmptyLine();
+      MethodSpec builderSpec = MethodSpec.methodBuilder(methodName)
+          .addModifiers(Modifier.PUBLIC)
+          .returns(builderClass)
+          .addStatement("return new $T()", builderClass)
+          .build();
+
+      spec.addMethod(builderSpec);
     }
 
-    writer.endType().close();
+    JavaFile javaFile = JavaFile.builder(valuesPackage, spec.build()).build();
+    javaFile.writeTo(out);
+    out.flush();
+    out.close();
   }
 
   private String getFileName() {

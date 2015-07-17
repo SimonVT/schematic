@@ -16,12 +16,18 @@
 
 package net.simonvt.schematic.compiler;
 
-import com.squareup.javawriter.JavaWriter;
+import com.squareup.javapoet.ArrayTypeName;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +184,8 @@ public class ContentProviderWriter {
       if (defaultNotifyInsert != null) {
         this.defaultNotifyInsert = (ExecutableElement) enclosedElement;
       }
-      NotifyBulkInsert defaultNotifyBulkInsert = enclosedElement.getAnnotation(NotifyBulkInsert.class);
+      NotifyBulkInsert defaultNotifyBulkInsert =
+          enclosedElement.getAnnotation(NotifyBulkInsert.class);
       if (defaultNotifyBulkInsert != null) {
         this.defaultNotifyBulkInsert = (ExecutableElement) enclosedElement;
       }
@@ -216,9 +223,9 @@ public class ContentProviderWriter {
             contract.path = path;
 
             String parent = ((TypeElement) enclosedElement).getQualifiedName().toString();
-            contract.name = enclosedElement.getSimpleName().toString().toUpperCase()
-                + "_"
-                + element.getSimpleName().toString();
+            contract.name = enclosedElement.getSimpleName().toString().toUpperCase() + "_" + element
+                .getSimpleName()
+                .toString();
             contract.classQualifiedName = parent;
 
             String contentTable = contentUri.table();
@@ -424,46 +431,42 @@ public class ContentProviderWriter {
   public void write(Filer filer) throws IOException {
     JavaFileObject jfo = filer.createSourceFile(getFileName());
     Writer out = jfo.openWriter();
-    JavaWriter writer = new JavaWriter(out);
 
-    writer.emitPackage(outPackage);
+    TypeSpec.Builder contentResolver = TypeSpec.classBuilder(providerName)
+        .superclass(Clazz.CONTENT_PROVIDER)
+        .addModifiers(Modifier.PUBLIC);
 
-    writer.emitImports("android.content.ContentProvider")
-        .emitImports("android.content.UriMatcher")
-        .emitImports("android.net.Uri")
-        .emitImports("android.content.ContentProviderOperation")
-        .emitImports("android.content.ContentProviderResult")
-        .emitImports("android.content.ContentValues")
-        .emitImports("android.content.ContentUris")
-        .emitImports("android.content.OperationApplicationException")
-        .emitImports("android.database.Cursor")
-        .emitImports("android.database.sqlite.SQLiteDatabase")
-        .emitImports("java.util.ArrayList")
-        .emitImports("java.util.Map")
-        .emitImports("java.util.Set")
-        .emitImports("net.simonvt.schematic.utils.SelectionBuilder")
-        .emitImports(outPackage + "." + databaseName)
-        .emitEmptyLine();
+    MethodSpec main = MethodSpec.methodBuilder("main")
+        .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+        .returns(void.class)
+        .addParameter(String[].class, "args")
+        .addStatement("$T.out.println($S)", System.class, "Hello, JavaPoet!")
+        .build();
 
-    writer.beginType(providerName, "class", EnumSet.of(Modifier.PUBLIC), "ContentProvider")
-        .emitEmptyLine()
-        .emitField("String", "AUTHORITY",
-            EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), "\"" + authority + "\"")
-        .emitEmptyLine();
+    FieldSpec authoritySpec =
+        FieldSpec.builder(String.class, "AUTHORITY", Modifier.PUBLIC, Modifier.STATIC,
+            Modifier.FINAL).initializer("$S", authority).build();
+    contentResolver.addField(authoritySpec);
 
     // Generate matcher IDs
-    int code = 0;
-    for (UriContract uri : uris) {
-      writer.emitField("int", uri.name,
-          EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL), String.valueOf(code));
-      code++;
+    for (int i = 0; i < uris.size(); i++) {
+      UriContract uri = uris.get(i);
+      FieldSpec idSpec =
+          FieldSpec.builder(int.class, uri.name, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+              .initializer(String.valueOf(i))
+              .build();
+      contentResolver.addField(idSpec);
     }
-    writer.emitEmptyLine();
 
     // Set up URI_MATCHER
-    writer.emitField("UriMatcher", "MATCHER",
-        EnumSet.of(Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL),
-        "new UriMatcher(UriMatcher.NO_MATCH)").beginInitializer(true);
+    FieldSpec matcherSpec =
+        FieldSpec.builder(Clazz.URI_MATCHER, "MATCHER", Modifier.PRIVATE, Modifier.STATIC,
+            Modifier.FINAL)
+            .initializer("new $T($T.NO_MATCH)", Clazz.URI_MATCHER, Clazz.URI_MATCHER)
+            .build();
+    contentResolver.addField(matcherSpec);
+
+    CodeBlock.Builder matcherInitializerBuilder = CodeBlock.builder();
 
     for (UriContract uri : uris) {
       String path;
@@ -472,22 +475,54 @@ public class ContentProviderWriter {
       } else {
         path = String.format("%s.%s.getPath()", uri.classQualifiedName, uri.name);
       }
-      writer.emitStatement("MATCHER.addURI(AUTHORITY, %s, %s)", path, uri.name);
+      matcherInitializerBuilder.addStatement("MATCHER.addURI(AUTHORITY, $L, $L)", path, uri.name);
     }
 
-    writer.endInitializer().emitEmptyLine();
+    CodeBlock matcherBlock = matcherInitializerBuilder.build();
+    contentResolver.addStaticBlock(matcherBlock);
 
-    writer.emitField(databaseName, "database").emitEmptyLine();
+    // Database variable
+    FieldSpec databaseSpec =
+        FieldSpec.builder(Clazz.SQLITE_OPEN_HELPER, "database", Modifier.PRIVATE).build();
+    contentResolver.addField(databaseSpec);
+
     // onCreate
-    writer.emitAnnotation(Override.class)
-        .beginMethod("boolean", "onCreate", EnumSet.of(Modifier.PUBLIC))
-        .emitStatement("database = %s.getInstance(getContext())", databaseName)
-        .emitStatement("return true")
-        .endMethod();
+    MethodSpec onCreateSpec = getOnCreateSpec();
+    contentResolver.addMethod(onCreateSpec);
 
     // getBuilder
-    writer.beginMethod("SelectionBuilder", "getBuilder", EnumSet.of(Modifier.PRIVATE), "String",
-        "table").emitStatement("SelectionBuilder builder = new SelectionBuilder()");
+    contentResolver.addMethod(getBuilderSpec());
+    contentResolver.addMethod(getInsertValuesSpec());
+    contentResolver.addMethod(getBulkInsertSpec());
+    contentResolver.addMethod(getApplyBatchSpec());
+    contentResolver.addMethod(getTypeSpec());
+    contentResolver.addMethod(getQuerySpec());
+    contentResolver.addMethod(getInsertSpec());
+    contentResolver.addMethod(getUpdateSpec());
+    contentResolver.addMethod(getDeleteSpec());
+
+    JavaFile javaFile = JavaFile.builder(outPackage, contentResolver.build()).build();
+    javaFile.writeTo(out);
+    out.flush();
+    out.close();
+  }
+
+  private MethodSpec getOnCreateSpec() {
+    return MethodSpec.methodBuilder("onCreate")
+        .returns(boolean.class)
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .addStatement("database = $L.getInstance(getContext())", databaseName)
+        .addStatement("return true")
+        .build();
+  }
+
+  private MethodSpec getBuilderSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("getBuilder")
+        .returns(Clazz.SELECTION_BUILDER)
+        .addModifiers(Modifier.PRIVATE)
+        .addParameter(String.class, "table")
+        .addStatement("$T builder = new $T()", Clazz.SELECTION_BUILDER, Clazz.SELECTION_BUILDER);
 
     Set<Element> tableKeys = columnMaps.keySet();
     for (Element key : tableKeys) {
@@ -495,121 +530,149 @@ public class ContentProviderWriter {
       String parent = ((TypeElement) method.getEnclosingElement()).getQualifiedName().toString();
       String methodName = method.getSimpleName().toString();
 
-      writer.beginControlFlow("if (\"" + key.getSimpleName().toString() + "\".equals(table))");
-
-      writer.emitStatement("Map<String, String> columnMap = %s.%s()", parent, methodName);
-      writer.emitStatement("Set<String> keys = columnMap.keySet()")
+      spec.beginControlFlow("if ($S.equals(table))", key.getSimpleName().toString())
+          .addStatement("$T columnMap = $L.$L()",
+              ParameterizedTypeName.get(Map.class, String.class, String.class), parent, methodName)
+          .addStatement("$T keys = columnMap.keySet()",
+              ParameterizedTypeName.get(Set.class, String.class))
           .beginControlFlow("for (String from : keys)")
-          .emitStatement("String to = columnMap.get(from)")
-          .emitStatement("builder.map(from, to)")
+          .addStatement("String to = columnMap.get(from)")
+          .addStatement("builder.map(from, to)")
+          .endControlFlow()
           .endControlFlow();
-
-      writer.endControlFlow();
     }
 
-    writer.emitStatement("return builder").endMethod().emitEmptyLine();
+    spec.addStatement("return builder");
 
-    writer.beginMethod("long[]", "insertValues", EnumSet.of(Modifier.PRIVATE), "SQLiteDatabase",
-        "db", "String", "table", "ContentValues[]", "values");
+    return spec.build();
+  }
 
-    writer.emitStatement("long[] ids = new long[values.length]");
+  private MethodSpec getInsertValuesSpec() {
+    return MethodSpec.methodBuilder("insertValues")
+        .returns(ArrayTypeName.of(long.class))
+        .addModifiers(Modifier.PRIVATE)
+        .addParameter(Clazz.SQLITE_DATABASE, "db")
+        .addParameter(String.class, "table")
+        .addParameter(ArrayTypeName.of(Clazz.CONTENT_VALUES), "values")
+        .addStatement("long[] ids = new long[values.length]")
+        .beginControlFlow("for (int i = 0; i < values.length; i++)")
+        .addStatement("$T cv = values[i]", Clazz.CONTENT_VALUES)
+        .addStatement("db.insertOrThrow(table, null, cv)")
+        .endControlFlow()
+        .addStatement("return ids")
+        .build();
+  }
 
-    writer.beginControlFlow("for (int i = 0; i < values.length; i++)")
-        .emitStatement("ContentValues cv = values[i]")
-        .emitStatement("db.insertOrThrow(table, null, cv)")
-        .endControlFlow();
-
-    writer.emitStatement("return ids").endMethod().emitEmptyLine();
-
-    // Bulk insert
-    writer.emitAnnotation(Override.class)
-        .beginMethod("int", "bulkInsert", EnumSet.of(Modifier.PUBLIC), "Uri", "uri",
-            "ContentValues[]", "values")
-        .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
-            "database.getWritableDatabase()")
-        .emitStatement("db.beginTransaction()")
+  private MethodSpec getBulkInsertSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("bulkInsert")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(int.class)
+        .addParameter(Clazz.URI, "uri")
+        .addParameter(ArrayTypeName.of(Clazz.CONTENT_VALUES), "values")
+        .addStatement("final $T db = database.getWritableDatabase()", Clazz.SQLITE_DATABASE)
+        .addStatement("db.beginTransaction()")
         .beginControlFlow("try")
-        .emitEmptyLine();
 
-    writer.beginControlFlow("switch(MATCHER.match(uri))");
+        .beginControlFlow("switch(MATCHER.match(uri))");
+
     for (UriContract uri : uris) {
       if (uri.allowInsert) {
-        writer.beginControlFlow("case " + uri.name + ":")
-            .emitStatement("long[] ids = insertValues(db, \"%s\", values)", uri.table);
+        spec.beginControlFlow("case $L:", uri.name)
+            .addStatement("long[] ids = insertValues(db, $S, values)", uri.table);
 
         if ((uri.path != null && notifyBulkInsert.containsKey(uri.path))
             || defaultNotifyBulkInsert != null) {
-          printNotifyBulkInsert(writer, uri);
+          spec.addCode(getNotifyBulkInsert(uri));
         } else {
-          writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
+          spec.addStatement("getContext().getContentResolver().notifyChange(uri, null)");
         }
 
-        writer.emitStatement("break")
-            .endControlFlow();
+        spec.addStatement("break").endControlFlow();
       }
     }
-    writer.endControlFlow();
 
-    writer.emitEmptyLine()
-        .emitStatement("db.setTransactionSuccessful()")
+    spec.endControlFlow()
+        .addStatement("db.setTransactionSuccessful()")
         .nextControlFlow("finally")
-        .emitStatement("db.endTransaction()")
+        .addStatement("db.endTransaction()")
         .endControlFlow()
-        .emitStatement("return values.length")
-        .endMethod()
-        .emitEmptyLine();
+        .addStatement("return values.length");
 
-    // Apply batch
-    writer.emitAnnotation(Override.class)
-        .beginMethod("ContentProviderResult[]", "applyBatch", EnumSet.of(Modifier.PUBLIC),
-            Arrays.asList("ArrayList<ContentProviderOperation>", "ops"),
-            Arrays.asList("OperationApplicationException"))
-        .emitStatement("ContentProviderResult[] results")
-        .emitStatement("database.getWritableDatabase().beginTransaction()")
+    return spec.build();
+  }
+
+  private MethodSpec getApplyBatchSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("applyBatch")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(ArrayTypeName.of(Clazz.CONTENT_PROVIDER_RESULT));
+
+    ClassName arrayList = ClassName.get(ArrayList.class);
+
+    spec.addParameter(ParameterizedTypeName.get(arrayList, Clazz.CONTENT_PROVIDER_OPERATION), "ops")
+        .addException(Clazz.OPERATION_APPLICATION_EXCEPTION);
+
+    spec.addStatement("$T[] results", Clazz.CONTENT_PROVIDER_RESULT)
+        .addStatement("final $T db = database.getWritableDatabase()", Clazz.SQLITE_DATABASE)
+        .addStatement("db.beginTransaction()")
         .beginControlFlow("try")
-        .emitStatement("results = super.applyBatch(ops)")
-        .emitStatement("database.getWritableDatabase().setTransactionSuccessful()")
+        .addStatement("results = super.applyBatch(ops)")
+        .addStatement("db.setTransactionSuccessful()")
         .nextControlFlow("finally")
-        .emitStatement("database.getWritableDatabase().endTransaction()")
+        .addStatement("db.endTransaction()")
         .endControlFlow()
-        .emitStatement("return results")
-        .endMethod();
+        .addStatement("return results");
 
-    // getType
-    writer.emitAnnotation(Override.class)
-        .beginMethod("String", "getType", EnumSet.of(Modifier.PUBLIC), "Uri", "uri")
+    return spec.build();
+  }
+
+  private MethodSpec getTypeSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("getType")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(String.class)
+        .addParameter(Clazz.URI, "uri")
         .beginControlFlow("switch(MATCHER.match(uri))");
 
     for (UriContract uri : uris) {
-      writer.beginControlFlow("case " + uri.name + ":")
-          .emitStatement("return \"" + uri.type + "\"")
+      spec.beginControlFlow("case $L:", uri.name)
+          .addStatement("return $S", uri.type)
           .endControlFlow();
     }
 
-    writer.beginControlFlow("default:")
-        .emitStatement("throw new IllegalArgumentException(\"Unknown URI \" + uri)")
+    spec.beginControlFlow("default:")
+        .addStatement("throw new $T(\"Unknown URI \" + uri)", IllegalArgumentException.class)
         .endControlFlow()
-        .endControlFlow()
-        .endMethod()
-        .emitEmptyLine();
+        .endControlFlow();
 
-    // query
-    writer.emitAnnotation(Override.class)
-        .beginMethod("Cursor", "query", EnumSet.of(Modifier.PUBLIC), "Uri", "uri", "String[]",
-            "projection", "String", "selection", "String[]", "selectionArgs", "String", "sortOrder")
-        .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
-            "database.getReadableDatabase()")
-        .beginControlFlow("switch(MATCHER.match(uri))");
+    return spec.build();
+  }
+
+  private MethodSpec getQuerySpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("query")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(Clazz.CURSOR)
+        .addParameter(Clazz.URI, "uri")
+        .addParameter(ArrayTypeName.of(String.class), "projection")
+        .addParameter(String.class, "selection")
+        .addParameter(ArrayTypeName.of(String.class), "selectionArgs")
+        .addParameter(String.class, "sortOrder");
+
+    spec.addStatement("final $T db = database.getReadableDatabase()", Clazz.SQLITE_DATABASE);
+
+    spec.beginControlFlow("switch(MATCHER.match(uri))");
 
     for (UriContract uri : uris) {
       if (uri.allowQuery) {
-        writer.beginControlFlow("case " + uri.name + ":");
-        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
-            uri.parent.getSimpleName().toString());
+        spec.beginControlFlow("case $L:", uri.name)
+            .addStatement("$T builder = getBuilder($S)", Clazz.SELECTION_BUILDER,
+                uri.parent.getSimpleName().toString());
 
         if (uri.defaultSort != null) {
-          writer.beginControlFlow("if (sortOrder == null)")
-              .emitStatement("sortOrder = \"%s\"", uri.defaultSort)
+          spec.beginControlFlow("if (sortOrder == null)")
+              .addStatement("sortOrder = $S", uri.defaultSort)
               .endControlFlow();
         }
 
@@ -644,17 +707,20 @@ public class ContentProviderWriter {
             } else {
               params.append(", ");
             }
+
             TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.net.Uri".equals(typeAsString)) {
+            if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
+            } else {
+              throw new IllegalArgumentException(
+                  "@Where does not support parameter " + paramType.toString());
             }
           }
 
-          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
-              params.toString());
-          writer.beginControlFlow("for (String where : wheres)")
-              .emitStatement("builder.where(where)")
+          spec.addStatement("$T wheres = $L.$L($L)", ArrayTypeName.of(String.class), parent,
+              methodName, params.toString())
+              .beginControlFlow("for ($T where : wheres)", String.class)
+              .addStatement("builder.where(where)")
               .endControlFlow();
         }
 
@@ -663,70 +729,60 @@ public class ContentProviderWriter {
           tableBuilder.append(" ").append(uri.join);
         }
 
-        if (uri.groupBy != null) {
-          writer.emitField("String", "groupBy", EnumSet.of(Modifier.FINAL),
-              "\"" + uri.groupBy + "\"");
-        } else {
-          writer.emitField("String", "groupBy", EnumSet.of(Modifier.FINAL), "null");
-        }
+        spec.addStatement("final String groupBy = $S", uri.groupBy)
+            .addStatement("final String having = $S", uri.having)
+            .addStatement("final String limit = $S", uri.limit);
 
-        if (uri.having != null) {
-          writer.emitField("String", "having", EnumSet.of(Modifier.FINAL),
-              "\"" + uri.having + "\"");
-        } else {
-          writer.emitField("String", "having", EnumSet.of(Modifier.FINAL), "null");
-        }
-
-        if (uri.limit != null) {
-          writer.emitField("String", "limit", EnumSet.of(Modifier.FINAL), "\"" + uri.limit + "\"");
-        } else {
-          writer.emitField("String", "limit", EnumSet.of(Modifier.FINAL), "null");
-        }
-
-        writer.emitStatement("Cursor cursor = builder.table(\"%s\")\n%s"
-                + ".query(db, projection, groupBy, having, sortOrder, limit)",
-            tableBuilder.toString(), whereBuilder.toString());
+        // TODO: The whereBuilder part is kind of gross
+        spec.addStatement(
+            "$T cursor = builder.table($S)\n$L.query(db, projection, groupBy, having, sortOrder, limit)",
+            Clazz.CURSOR, tableBuilder.toString(), whereBuilder.toString());
 
         Element notifyUri = notificationUris.get(uri.path);
         if (notifyUri != null) {
           String parent =
               ((TypeElement) notifyUri.getEnclosingElement()).getQualifiedName().toString();
           String uriName = notifyUri.getSimpleName().toString();
-          writer.emitStatement("cursor.setNotificationUri(getContext().getContentResolver(), %s)",
+          spec.addStatement("cursor.setNotificationUri(getContext().getContentResolver(), $L)",
               parent + "." + uriName);
         } else {
-          writer.emitStatement("cursor.setNotificationUri(getContext().getContentResolver(), uri)");
+          spec.addStatement("cursor.setNotificationUri(getContext().getContentResolver(), uri)");
         }
 
-        writer.emitStatement("return cursor").endControlFlow();
+        spec.addStatement("return cursor").endControlFlow();
       }
     }
 
-    writer.beginControlFlow("default:")
-        .emitStatement("throw new IllegalArgumentException(\"Unknown URI \" + uri)")
+    spec.beginControlFlow("default:")
+        .addStatement("throw new $T(\"Unknown URI \" + uri)", IllegalArgumentException.class)
         .endControlFlow()
-        .endControlFlow()
-        .endMethod()
-        .emitEmptyLine();
+        .endControlFlow();
 
-    // insert
-    writer.emitAnnotation(Override.class)
-        .beginMethod("Uri", "insert", EnumSet.of(Modifier.PUBLIC), "Uri", "uri", "ContentValues",
-            "values")
-        .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
-            "database.getWritableDatabase()")
+    return spec.build();
+  }
+
+  private MethodSpec getInsertSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("insert")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(Clazz.URI)
+        .addParameter(Clazz.URI, "uri")
+        .addParameter(Clazz.CONTENT_VALUES, "values")
+        .addStatement("final $T db = database.getWritableDatabase()", Clazz.SQLITE_DATABASE)
         .beginControlFlow("switch(MATCHER.match(uri))");
 
     for (UriContract uri : uris) {
       if (uri.allowInsert) {
-        writer.beginControlFlow("case " + uri.name + ":")
-            .emitStatement("final long id = db.insertOrThrow(\"%s\", null, values)", uri.table);
+        spec.beginControlFlow("case $L:", uri.name)
+            .addStatement("final $T id = db.insertOrThrow($S, null, values)", long.class,
+                uri.table);
 
         if ((uri.path != null && notifyInsert.containsKey(uri.path))
             || defaultNotifyInsert != null) {
-          printNotifyInsert(writer, uri);
+          CodeBlock notifyInsert = getNotifyInsert(uri);
+          spec.addCode(notifyInsert);
         } else {
-          writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
+          spec.addStatement("getContext().getContentResolver().notifyChange(uri, null)");
         }
 
         ExecutableElement insertUri = insertUris.get(uri.path);
@@ -745,59 +801,66 @@ public class ContentProviderWriter {
             } else {
               params.append(", ");
             }
-            TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
 
-            if ("android.net.Uri".equals(typeAsString)) {
+            TypeMirror paramType = param.asType();
+            if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
-            }
-            if ("android.content.ContentValues".equals(typeAsString)) {
+            } else if (Clazz.CONTENT_VALUES.equals(ClassName.get(paramType))) {
               params.append("values");
+            } else {
+              throw new IllegalArgumentException(
+                  "@NotifyInsert does not support parameter " + paramType.toString());
             }
           }
-          writer.emitStatement("return %s.%s(%s)", parent, methodName, params.toString());
+
+          spec.addStatement("return $L.$L($L)", parent, methodName, params.toString());
         } else {
-          writer.emitStatement("return ContentUris.withAppendedId(uri, id)");
+          spec.addStatement("return $T.withAppendedId(uri, id)", Clazz.CONTENT_URIS);
         }
 
-        writer.endControlFlow();
+        spec.endControlFlow();
       }
     }
 
-    writer.beginControlFlow("default:")
-        .emitStatement("throw new IllegalArgumentException(\"Unknown URI \" + uri)")
+    spec.beginControlFlow("default:")
+        .addStatement("throw new $T(\"Unknown URI \" + uri)", IllegalArgumentException.class)
         .endControlFlow()
-        .endControlFlow()
-        .endMethod()
-        .emitEmptyLine();
+        .endControlFlow();
 
-    // update
-    writer.emitAnnotation(Override.class)
-        .beginMethod("int", "update", EnumSet.of(Modifier.PUBLIC), "Uri", "uri", "ContentValues",
-            "values", "String", "where", "String[]", "whereArgs")
-        .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
-            "database.getWritableDatabase()")
+    return spec.build();
+  }
+
+  private MethodSpec getUpdateSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("update")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(int.class)
+        .addParameter(Clazz.URI, "uri")
+        .addParameter(Clazz.CONTENT_VALUES, "values")
+        .addParameter(String.class, "where")
+        .addParameter(ArrayTypeName.of(String.class), "whereArgs");
+
+    spec.addStatement("final $T db = database.getWritableDatabase()", Clazz.SQLITE_DATABASE)
         .beginControlFlow("switch(MATCHER.match(uri))");
 
     for (UriContract uri : uris) {
       if (uri.allowUpdate) {
-        writer.beginControlFlow("case " + uri.name + ":");
-
-        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
-            uri.parent.getSimpleName().toString());
+        spec.beginControlFlow("case $L:", uri.name)
+            .addStatement("$T builder = getBuilder($S)", Clazz.SELECTION_BUILDER,
+                uri.parent.getSimpleName().toString());
 
         if (uri.contractType == UriContract.Type.INEXACT) {
           for (int i = 0; i < uri.whereColumns.length; i++) {
             String column = uri.whereColumns[i];
             int pathSegment = uri.pathSegments[i];
-            writer.emitStatement("builder.where(\"%s=?\", uri.getPathSegments().get(%d))", column,
+            spec.addStatement("builder.where(\"$L=?\", uri.getPathSegments().get($L))", column,
                 pathSegment);
           }
         }
         for (String where : uri.where) {
-          writer.emitStatement("builder.where(\"%s\")", where);
+          spec.addStatement("builder.where($S)", where);
         }
-        writer.emitStatement("builder.where(where, whereArgs)");
+        spec.addStatement("builder.where(where, whereArgs)");
 
         ExecutableElement where = whereCalls.get(uri.path);
         if (where != null) {
@@ -813,17 +876,20 @@ public class ContentProviderWriter {
             } else {
               params.append(", ");
             }
+
             TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.net.Uri".equals(typeAsString)) {
+            if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
+            } else {
+              throw new IllegalArgumentException(
+                  "@Where does not support parameter " + paramType.toString());
             }
           }
 
-          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
-              params.toString());
-          writer.beginControlFlow("for (String w : wheres)")
-              .emitStatement("builder.where(w)")
+          spec.addStatement("$T wheres = $L.$L($L)", ArrayTypeName.of(String.class), parent,
+              methodName, params.toString())
+              .beginControlFlow("for ($T updateWhere : wheres)", String.class)
+              .addStatement("builder.where(updateWhere)")
               .endControlFlow();
         }
 
@@ -849,78 +915,81 @@ public class ContentProviderWriter {
             } else {
               params.append(", ");
             }
+
             TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.content.Context".equals(typeAsString)) {
+            VariableElement variableElement = param;
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
               params.append("getContext()");
-            }
-            if ("android.net.Uri".equals(typeAsString)) {
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
-            }
-            if ("android.content.ContentValues".equals(typeAsString)) {
+            } else if (Clazz.CONTENT_VALUES.equals(ClassName.get(paramType))) {
               params.append("values");
-            }
-            if ("java.lang.String".equals(typeAsString)) {
+            } else if (ClassName.get(String.class).equals(ClassName.get(paramType))) {
               params.append("builder.getSelection()");
-            }
-            if ("java.lang.String[]".equals(typeAsString)) {
+            } else if ("java.lang.String[]".equals(variableElement.asType().toString())) {
               params.append("builder.getSelectionArgs()");
+            } else {
+              throw new IllegalArgumentException(
+                  "@NotifyUpdate does not support parameter " + paramType.toString());
             }
           }
 
-          writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
-              params.toString());
+          spec.addStatement("$T notifyUris = $L.$L($L)", ArrayTypeName.of(Clazz.URI), parent,
+              methodName, params.toString());
         }
 
-        writer.emitStatement("final int count = builder.table(\"%s\")\n.update(db, values)",
+        spec.addStatement("final $T count = builder.table($S)\n.update(db, values)", int.class,
             uri.table).beginControlFlow("if (count > 0)");
 
         if (hasNotifyUris) {
-          writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
-              .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
+          spec.beginControlFlow("for ($T notifyUri : notifyUris)", Clazz.URI)
+              .addStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
               .endControlFlow();
         } else {
-          writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
+          spec.addStatement("getContext().getContentResolver().notifyChange(uri, null)");
         }
 
-        writer.endControlFlow().emitStatement("return count").endControlFlow();
+        spec.endControlFlow().addStatement("return count").endControlFlow();
       }
     }
 
-    writer.beginControlFlow("default:")
-        .emitStatement("throw new IllegalArgumentException(\"Unknown URI \" + uri)")
+    spec.beginControlFlow("default:")
+        .addStatement("throw new $T(\"Unknown URI \" + uri)", IllegalArgumentException.class)
         .endControlFlow()
-        .endControlFlow()
-        .endMethod()
-        .emitEmptyLine();
+        .endControlFlow();
 
-    // delete
-    writer.emitAnnotation(Override.class)
-        .beginMethod("int", "delete", EnumSet.of(Modifier.PUBLIC), "Uri", "uri", "String", "where",
-            "String[]", "whereArgs")
-        .emitField("SQLiteDatabase", "db", EnumSet.of(Modifier.FINAL),
-            "database.getWritableDatabase()")
+    return spec.build();
+  }
+
+  private MethodSpec getDeleteSpec() {
+    MethodSpec.Builder spec = MethodSpec.methodBuilder("delete")
+        .addModifiers(Modifier.PUBLIC)
+        .addAnnotation(Override.class)
+        .returns(int.class)
+        .addParameter(Clazz.URI, "uri")
+        .addParameter(String.class, "where")
+        .addParameter(ArrayTypeName.of(String.class), "whereArgs")
+        .addStatement("final $T db = database.getWritableDatabase()", Clazz.SQLITE_DATABASE)
         .beginControlFlow("switch(MATCHER.match(uri))");
 
     for (UriContract uri : uris) {
       if (uri.allowDelete) {
-        writer.beginControlFlow("case " + uri.name + ":");
-
-        writer.emitStatement("SelectionBuilder builder = getBuilder(\"%s\")",
-            uri.parent.getSimpleName().toString());
+        spec.beginControlFlow("case $L:", uri.name)
+            .addStatement("$T builder = getBuilder($S)", Clazz.SELECTION_BUILDER,
+                uri.parent.getSimpleName().toString());
 
         if (uri.contractType == UriContract.Type.INEXACT) {
           for (int i = 0; i < uri.whereColumns.length; i++) {
             String column = uri.whereColumns[i];
             int pathSegment = uri.pathSegments[i];
-            writer.emitStatement("builder.where(\"%s=?\", uri.getPathSegments().get(%d))", column,
+            spec.addStatement("builder.where(\"$L=?\", uri.getPathSegments().get($L))", column,
                 pathSegment);
           }
         }
         for (String where : uri.where) {
-          writer.emitStatement("builder.where(\"%s\")", where);
+          spec.addStatement("builder.where($S)", where);
         }
-        writer.emitStatement("builder.where(where, whereArgs)");
+        spec.addStatement("builder.where(where, whereArgs)");
 
         ExecutableElement where = whereCalls.get(uri.path);
         if (where != null) {
@@ -936,17 +1005,20 @@ public class ContentProviderWriter {
             } else {
               params.append(", ");
             }
+
             TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.net.Uri".equals(typeAsString)) {
+            if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
+            } else {
+              throw new IllegalArgumentException(
+                  "@Where does not support parameter " + paramType.toString());
             }
           }
 
-          writer.emitStatement("String[] wheres = %s.%s(%s)", parent, methodName,
-              params.toString());
-          writer.beginControlFlow("for (String w : wheres)")
-              .emitStatement("builder.where(w)")
+          spec.addStatement("$T wheres = $L.$L($L)", ArrayTypeName.of(String.class), parent,
+              methodName, params.toString());
+          spec.beginControlFlow("for ($T deleteWhere : wheres)", String.class)
+              .addStatement("builder.where(deleteWhere)")
               .endControlFlow();
         }
 
@@ -973,52 +1045,49 @@ public class ContentProviderWriter {
             } else {
               params.append(", ");
             }
+
             TypeMirror paramType = param.asType();
-            String typeAsString = paramType.toString();
-            if ("android.content.Context".equals(typeAsString)) {
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
               params.append("getContext()");
-            }
-            if ("android.net.Uri".equals(typeAsString)) {
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
-            }
-            if ("java.lang.String".equals(typeAsString)) {
+            } else if (ClassName.get(String.class).equals(ClassName.get(paramType))) {
               params.append("builder.getSelection()");
-            }
-            if ("java.lang.String[]".equals(typeAsString)) {
+            } else if (ArrayTypeName.get(String.class).equals(ArrayTypeName.get(paramType))) {
               params.append("builder.getSelectionArgs()");
+            } else {
+              throw new IllegalArgumentException(
+                  "@NotifyDelete does not support parameter " + paramType.toString());
             }
           }
 
-          writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
-              params.toString());
+          spec.addStatement("$T notifyUris = $L.$L($L)", ArrayTypeName.of(Clazz.URI), parent,
+              methodName, params.toString());
         }
 
-        writer.emitStatement("final int count = builder\n.table(\"%s\")\n.delete(db)", uri.table);
+        spec.addStatement("final int count = builder\n.table($S)\n.delete(db)", uri.table);
 
         if (hasNotifyUris) {
-          writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
-              .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
+          spec.beginControlFlow("for ($T notifyUri : notifyUris)", Clazz.URI)
+              .addStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
               .endControlFlow();
         } else {
-          writer.emitStatement("getContext().getContentResolver().notifyChange(uri, null)");
+          spec.addStatement("getContext().getContentResolver().notifyChange(uri, null)");
         }
 
-        writer.emitStatement("return count").endControlFlow();
+        spec.addStatement("return count").endControlFlow();
       }
     }
 
-    writer.beginControlFlow("default:")
-        .emitStatement("throw new IllegalArgumentException(\"Unknown URI \" + uri)")
+    spec.beginControlFlow("default:")
+        .addStatement("throw new $T(\"Unknown URI \" + uri)", IllegalArgumentException.class)
         .endControlFlow()
-        .endControlFlow()
-        .endMethod()
-        .emitEmptyLine();
+        .endControlFlow();
 
-    writer.endType();
-    writer.close();
+    return spec.build();
   }
 
-  private void printNotifyInsert(JavaWriter writer, UriContract uri) throws IOException {
+  private CodeBlock getNotifyInsert(UriContract uri) {
     ExecutableElement notifyMethod = notifyInsert.get(uri.path);
     if (notifyMethod == null) {
       notifyMethod = defaultNotifyInsert;
@@ -1037,37 +1106,36 @@ public class ContentProviderWriter {
       } else {
         params.append(", ");
       }
+
       TypeMirror paramType = param.asType();
-      String typeAsString = paramType.toString();
-      if ("android.content.Context".equals(typeAsString)) {
+      if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
         params.append("getContext()");
-      }
-      if ("android.net.Uri".equals(typeAsString)) {
+      } else if (Clazz.URI.equals(ClassName.get(paramType))) {
         params.append("uri");
-      }
-      if ("android.content.ContentValues".equals(typeAsString)) {
+      } else if (Clazz.CONTENT_VALUES.equals(ClassName.get(paramType))) {
         params.append("values");
-      }
-      if ("long".equals(typeAsString)) {
+      } else if (TypeName.LONG.equals(TypeName.get(paramType))) {
         params.append("id");
-      }
-      if ("java.lang.String".equals(typeAsString)) {
+      } else if (ClassName.get(String.class).equals(ClassName.get(paramType))) {
         params.append("where");
-      }
-      if ("java.lang.String[]".equals(typeAsString)) {
+      } else if (ArrayTypeName.get(String.class).equals(ArrayTypeName.get(paramType))) {
         params.append("whereArgs");
+      } else {
+        throw new IllegalArgumentException(
+            "@NotifyInsert does not support parameter " + paramType.toString());
       }
     }
 
-    writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
-        params.toString());
-
-    writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
-        .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
-        .endControlFlow();
+    return CodeBlock.builder()
+        .addStatement("$T[] notifyUris = $L.$L($L)", Clazz.URI, parent, methodName,
+            params.toString())
+        .beginControlFlow("for ($T notifyUri : notifyUris)", Clazz.URI)
+        .addStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
+        .endControlFlow()
+        .build();
   }
 
-  private void printNotifyBulkInsert(JavaWriter writer, UriContract uri) throws IOException {
+  private CodeBlock getNotifyBulkInsert(UriContract uri) {
     ExecutableElement notifyMethod = notifyBulkInsert.get(uri.path);
     if (notifyMethod == null) {
       notifyMethod = defaultNotifyBulkInsert;
@@ -1086,28 +1154,29 @@ public class ContentProviderWriter {
       } else {
         params.append(", ");
       }
+
       TypeMirror paramType = param.asType();
-      String typeAsString = paramType.toString();
-      if ("android.content.Context".equals(typeAsString)) {
+      if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
         params.append("getContext()");
-      }
-      if ("android.net.Uri".equals(typeAsString)) {
+      } else if (Clazz.URI.equals(ClassName.get(paramType))) {
         params.append("uri");
-      }
-      if ("android.content.ContentValues[]".equals(typeAsString)) {
+      } else if (ArrayTypeName.of(Clazz.CONTENT_VALUES).equals(ArrayTypeName.get(paramType))) {
         params.append("values");
-      }
-      if ("long[]".equals(typeAsString)) {
+      } else if (ArrayTypeName.of(ArrayTypeName.LONG).equals(ArrayTypeName.get(paramType))) {
         params.append("ids");
+      } else {
+        throw new IllegalArgumentException(
+            "@NotifyBulkInsert does not support parameter " + paramType.toString());
       }
     }
 
-    writer.emitStatement("Uri[] notifyUris = %s.%s(%s)", parent, methodName,
-        params.toString());
-
-    writer.beginControlFlow("for (Uri notifyUri : notifyUris)")
-        .emitStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
-        .endControlFlow();
+    return CodeBlock.builder()
+        .addStatement("$T[] notifyUris = $L.$L($L)", Clazz.URI, parent, methodName,
+            params.toString())
+        .beginControlFlow("for ($T notifyUri : notifyUris)", Clazz.URI)
+        .addStatement("getContext().getContentResolver().notifyChange(notifyUri, null)")
+        .endControlFlow()
+        .build();
   }
 
   private String getFileName() {

@@ -20,7 +20,7 @@ ext.libraries = [
 
   androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.5.1',
 
-  javawriter: 'com.squareup:javawriter:2.5.1',
+  javapoet: 'com.squareup:javapoet:1.2.0',
 
   supportv4: 'com.android.support:support-v4:22.2.0',
 

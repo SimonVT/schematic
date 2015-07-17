@@ -140,7 +140,7 @@ public final class NotesProvider {
     }
 
     @NotifyUpdate(paths = Path.NOTES + "/#") public static Uri[] onUpdate(Context context,
-        Uri uri) {
+        Uri uri, String where, String[] whereArgs) {
       final long noteId = Long.valueOf(uri.getPathSegments().get(1));
       Cursor c = context.getContentResolver().query(uri, new String[] {
           NoteColumns.LIST_ID,

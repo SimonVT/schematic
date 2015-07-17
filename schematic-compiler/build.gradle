@@ -6,7 +6,7 @@ sourceCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
   compile project(':schematic-annotations')
-  compile parent.libraries.javawriter
+  compile parent.libraries.javapoet
   compile parent.libraries.guava
 }
 

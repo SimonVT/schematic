@@ -19,6 +19,7 @@ package net.simonvt.schematic.sample.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import net.simonvt.schematic.annotation.Database;
+import net.simonvt.schematic.annotation.ExecOnCreate;
 import net.simonvt.schematic.annotation.OnConfigure;
 import net.simonvt.schematic.annotation.OnCreate;
 import net.simonvt.schematic.annotation.OnUpgrade;
@@ -49,4 +50,6 @@ public final class NotesDatabase {
 
   @OnConfigure public static void onConfigure(SQLiteDatabase db) {
   }
+
+  @ExecOnCreate public static final String EXEC_ON_CREATE = "SELECT * FROM " + NOTES;
 }
