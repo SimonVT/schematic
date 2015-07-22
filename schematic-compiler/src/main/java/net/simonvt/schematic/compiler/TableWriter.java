@@ -34,6 +34,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.AutoIncrement;
+import net.simonvt.schematic.annotation.Check;
 import net.simonvt.schematic.annotation.ConflictResolutionType;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DefaultValue;
@@ -48,6 +49,7 @@ public class TableWriter {
   ProcessingEnvironment processingEnv;
 
   String name;
+  Check checkConstraint;
 
   VariableElement table;
 
@@ -70,6 +72,8 @@ public class TableWriter {
     }
 
     List<? extends TypeMirror> interfaces = columnsClass.getInterfaces();
+
+    checkConstraint = columnsClass.getAnnotation(Check.class);
 
     findColumns(columnsClass.getEnclosedElements());
 
@@ -151,6 +155,11 @@ public class TableWriter {
         writeOnConflict(query, unique.onConflict());
       }
 
+      Check check = element.getAnnotation(Check.class);
+      if (check != null) {
+        writeCheckConstraint(query, check);
+      }
+
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
       if (autoIncrement != null) {
         if (primaryKeyCount > 1) {
@@ -186,12 +195,21 @@ public class TableWriter {
       query.append(")");
     }
 
+    if (checkConstraint != null) {
+      query.append(",\"\n + \"");
+      writeCheckConstraint(query, checkConstraint);
+    }
+
     query.append(")\"");
 
     writer.emitField("String", table.getSimpleName().toString(),
         EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), query.toString());
 
     //writer.emitStatement("db.execSQL(\"%s\")", query.toString());
+  }
+
+  private void writeCheckConstraint(StringBuilder query, Check check) {
+      query.append(" ").append("CHECK ( ").append(check.value()).append(" )");
   }
 
   private static void writeOnConflict(StringBuilder query, ConflictResolutionType conflictResolution) {

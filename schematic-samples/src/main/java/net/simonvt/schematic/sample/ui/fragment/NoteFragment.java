@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -50,20 +51,23 @@ public class NoteFragment extends Fragment {
   private static final String ARG_ID = "net.simonvt.schematic.samples.ui.fragment.NoteFragment.id";
   private static final String ARG_NOTE =
       "net.simonvt.schematic.samples.ui.fragment.NoteFragment.note";
+  private static final String ARG_STATUS =
+          "net.simonvt.schematic.samples.ui.fragment.NoteFragment.status";
 
   private static final long NO_ID = -1L;
 
   public static NoteFragment newInstance(long listId) {
-    return newInstance(listId, NO_ID, null);
+    return newInstance(listId, NO_ID, null, null);
   }
 
-  public static NoteFragment newInstance(long listId, long id, String note) {
+  public static NoteFragment newInstance(long listId, long id, String note, String status) {
     NoteFragment f = new NoteFragment();
 
     Bundle args = new Bundle();
     args.putLong(ARG_LIST_ID, listId);
     args.putLong(ARG_ID, id);
     args.putString(ARG_NOTE, note);
+    args.putString(ARG_STATUS, status);
     f.setArguments(args);
 
     return f;
@@ -72,12 +76,14 @@ public class NoteFragment extends Fragment {
   private long listId;
   private long noteId;
   private String note;
+  private String status;
 
   private NoteListener listener;
 
   @InjectView(R.id.action) View actionView;
   @InjectView(R.id.actionText) TextView actionText;
   @InjectView(R.id.note) EditText noteView;
+  @InjectView(R.id.statusSwitch) Switch statusView;
 
   @Override public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -90,6 +96,7 @@ public class NoteFragment extends Fragment {
     listId = args.getLong(ARG_LIST_ID);
     noteId = args.getLong(ARG_ID);
     note = args.getString(ARG_NOTE);
+    status = args.getString(ARG_STATUS);
 
     setHasOptionsMenu(true);
   }
@@ -104,8 +111,10 @@ public class NoteFragment extends Fragment {
     ButterKnife.inject(this, view);
     if (noteId != NO_ID) {
       noteView.setText(note);
+      statusView.setChecked(status == NoteColumns.STATUS_COMPLETED);
       actionText.setText(R.string.update);
     } else {
+      statusView.setChecked(false);
       actionText.setText(R.string.insert);
     }
   }
@@ -138,6 +147,12 @@ public class NoteFragment extends Fragment {
 
   @OnClick(R.id.action) void onAction() {
     final String note = noteView.getText().toString();
+    final String status;
+    if (statusView.isChecked()) {
+      status = NoteColumns.STATUS_COMPLETED;
+    } else {
+      status = NoteColumns.STATUS_NEW;
+    }
     final Context appContext = getActivity().getApplicationContext();
     if (noteId == NO_ID) {
       new Thread(new Runnable() {
@@ -145,6 +160,7 @@ public class NoteFragment extends Fragment {
           ContentValues cv = new ContentValues();
           cv.put(NoteColumns.LIST_ID, listId);
           cv.put(NoteColumns.NOTE, note);
+          cv.put(NoteColumns.STATUS, status);
           appContext.getContentResolver().insert(Notes.CONTENT_URI, cv);
         }
       }).start();
@@ -153,6 +169,7 @@ public class NoteFragment extends Fragment {
         @Override public void run() {
           ContentValues cv = new ContentValues();
           cv.put(NoteColumns.NOTE, note);
+          cv.put(NoteColumns.STATUS, status);
           appContext.getContentResolver().update(Notes.withId(noteId), cv, null, null);
         }
       }).start();
