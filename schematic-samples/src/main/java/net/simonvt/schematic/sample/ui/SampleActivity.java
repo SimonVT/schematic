@@ -64,8 +64,8 @@ public class SampleActivity extends FragmentActivity
         .commit();
   }
 
-  @Override public void onNoteSelected(long listId, long noteId, String note) {
-    Fragment f = NoteFragment.newInstance(listId, noteId, note);
+  @Override public void onNoteSelected(long listId, long noteId, String note, String status) {
+    Fragment f = NoteFragment.newInstance(listId, noteId, note, status);
     getSupportFragmentManager() //
         .beginTransaction() //
         .replace(android.R.id.content, f, FRAGMENT_NOTE) //

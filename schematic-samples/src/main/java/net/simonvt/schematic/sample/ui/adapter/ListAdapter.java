@@ -44,10 +44,13 @@ public class ListAdapter extends CursorAdapter {
     ViewHolder vh = (ViewHolder) view.getTag();
     final String note = cursor.getString(cursor.getColumnIndex(NoteColumns.NOTE));
     vh.note.setText(note);
+    final String status = cursor.getString(cursor.getColumnIndex(NoteColumns.STATUS));
+    vh.status.setText(status);
   }
 
   static class ViewHolder {
     @InjectView(R.id.note) TextView note;
+    @InjectView(R.id.statusText) TextView status;
 
     ViewHolder(View v) {
       ButterKnife.inject(this, v);

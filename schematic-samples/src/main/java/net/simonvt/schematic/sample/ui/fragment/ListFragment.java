@@ -48,7 +48,7 @@ public class ListFragment extends Fragment implements LoaderManager.LoaderCallba
 
     void onAddNote(long listId);
 
-    void onNoteSelected(long listId, long noteId, String note);
+    void onNoteSelected(long listId, long noteId, String note, String status);
 
     void onListRemoved();
   }
@@ -140,7 +140,8 @@ public class ListFragment extends Fragment implements LoaderManager.LoaderCallba
   @OnItemClick(android.R.id.list) void onNoteSelected(int position, long noteId) {
     Cursor c = (Cursor) adapter.getItem(position);
     String note = c.getString(c.getColumnIndex(NoteColumns.NOTE));
-    listener.onNoteSelected(listId, noteId, note);
+    String status = c.getString(c.getColumnIndex(NoteColumns.STATUS));
+    listener.onNoteSelected(listId, noteId, note, status);
   }
 
   @Override public Loader<Cursor> onCreateLoader(int id, Bundle args) {
