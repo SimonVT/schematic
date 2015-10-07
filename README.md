@@ -1,7 +1,7 @@
 Schematic
 =========
 
-Automatically generate a ContentProvider backed by an SQLite database.
+Automatically generate a `ContentProvider` backed by an SQLite database.
 
 
 Usage
@@ -49,6 +49,14 @@ public final class NotesProvider {
     public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists")
   }
 ```
+
+There are 2 annotations to use when you define your ContentUri: `@InexactContentUri` and `@ContentUri`.
+
+`@ContentUri` must be used with a `public static final Uri` field. With this, you can fill the `where` parameter with a static query to be used automatically. 
+
+`@InexactContentUri` must be used with a `public static` method with `Uri` return type. When you use that, you have `whereColumn` and `pathSegment` option. `pathSegment` is an integer and Schematic automatically gets the indicated path and applies to `whereColumn` to build the query. 
+
+These annotations can be used multiple times.
 
 
 Including in your project
