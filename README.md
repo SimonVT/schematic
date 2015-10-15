@@ -50,6 +50,45 @@ public final class NotesProvider {
   }
 ```
 
+Table column annotations
+------------------------
+
+```java
+@AutoIncrement
+@DataType
+@DefaultValue
+@NotNull
+@PrimaryKey
+@References
+@Unique
+```
+
+Defining an Uri
+---------------
+
+The ```@ContentUri``` annotation is used when the ```Uri``` does not change.
+
+```java
+@ContentUri(
+  path = "lists",
+  type = "vnd.android.cursor.dir/list",
+  defaultSort = ListColumns.TITLE + " ASC")
+public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
+```
+
+If the ```Uri``` is created based on some value, e.g. an id, ```@InexactContentUri``` is used.
+```java
+@InexactContentUri(
+  path = Path.LISTS + "/#",
+  name = "LIST_ID",
+  type = "vnd.android.cursor.item/list",
+  whereColumn = ListColumns._ID,
+  pathSegment = 1)
+public static Uri withId(long id) {
+  return Uri.parse("content://" + AUTHORITY + "/lists/" + id);
+}
+```
+
 
 Including in your project
 =========================

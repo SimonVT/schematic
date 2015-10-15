@@ -23,7 +23,19 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * This Uri is set as notifications Uri on the Cursor returned when querying the defined paths.
+ * This {@code Uri} is set as notifications {@code Uri} on the {@code Cursor} returned when querying
+ * the defined paths.
+ * <pre>{@code
+ * &#064;ContentUri(
+ *   path = "lists",
+ *   type = "vnd.android.cursor.dir/list",
+ *   defaultSort = ListColumns.TITLE + " ASC")
+ * &#064;NotificationUri(
+ *   paths = {
+ *       "lists/withItems"
+ *   })
+ * public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
+ * }</pre>
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface NotificationUri {

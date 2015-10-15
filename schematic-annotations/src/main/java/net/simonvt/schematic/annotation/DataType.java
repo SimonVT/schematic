@@ -23,13 +23,14 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * The datatype of an SQLite column.
+ * The datatype of an SQLite column. One of {@link Type#INTEGER}, {@link Type#REAL},
+ * {@link Type#TEXT} or {@link Type#BLOB}.
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface DataType {
   Type value();
 
-  public enum Type {
+  enum Type {
     INTEGER("INTEGER"),
     REAL("REAL"),
     TEXT("TEXT"),

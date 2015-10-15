@@ -23,12 +23,14 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
- * Adds the PRIMARY KEY keyword to the database column.
+ * Adds the PRIMARY KEY keyword to a database column.
+ * In case of multiple primary keys, a PRIMARY KEY table constraint is added.
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface PrimaryKey {
-    /**
-     * Defines conflict resolution algorithm. Will be ignored if there are multiple PrimaryKey annotations
-     */
-    ConflictResolutionType onConflict() default ConflictResolutionType.NONE;
+  /**
+   * Defines conflict resolution algorithm. Will be ignored if there are multiple PrimaryKey
+   * annotations
+   */
+  ConflictResolutionType onConflict() default ConflictResolutionType.NONE;
 }
