@@ -30,8 +30,9 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import butterknife.OnClick;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
@@ -80,10 +81,10 @@ public class NoteFragment extends Fragment {
 
   private NoteListener listener;
 
-  @InjectView(R.id.action) View actionView;
-  @InjectView(R.id.actionText) TextView actionText;
-  @InjectView(R.id.note) EditText noteView;
-  @InjectView(R.id.statusSwitch) Switch statusView;
+  @Bind(R.id.action) View actionView;
+  @Bind(R.id.actionText) TextView actionText;
+  @Bind(R.id.note) EditText noteView;
+  @Bind(R.id.statusSwitch) Switch statusView;
 
   @Override public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -108,7 +109,7 @@ public class NoteFragment extends Fragment {
 
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    ButterKnife.inject(this, view);
+    ButterKnife.bind(this, view);
     if (noteId != NO_ID) {
       noteView.setText(note);
       statusView.setChecked(NoteColumns.STATUS_COMPLETED.equals(status));
@@ -120,7 +121,7 @@ public class NoteFragment extends Fragment {
   }
 
   @Override public void onDestroyView() {
-    ButterKnife.reset(this);
+    ButterKnife.unbind(this);
     super.onDestroyView();
   }
 

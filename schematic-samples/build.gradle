@@ -1,6 +1,6 @@
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 apply plugin: 'checkstyle'
-apply plugin: 'android-apt'
+apply plugin: 'com.neenbedankt.android-apt'
 
 buildscript {
   repositories {

@@ -59,7 +59,7 @@ and also sets the source paths so AS picks it up the generated classes.
 
 ```groovy
 apply plugin: 'com.android.application'
-apply plugin: 'android-apt'
+apply plugin: 'com.neenbedankt.android-apt'
 
 buildscript {
   repositories {
@@ -68,7 +68,7 @@ buildscript {
 
   dependencies {
     classpath 'com.android.tools.build:gradle:{latest-version}'
-    classpath 'com.neenbedankt.gradle.plugins:{latest-version}'
+    classpath 'com.neenbedankt.gradle.plugins:android-apt:{latest-version}'
   }
 }
 

@@ -28,8 +28,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import butterknife.Bind;
 import butterknife.ButterKnife;
-import butterknife.InjectView;
 import butterknife.OnClick;
 import butterknife.OnItemClick;
 import net.simonvt.schematic.sample.R;
@@ -49,8 +50,8 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   private static final String DIALOG_NEW_LIST =
       "net.simonvt.schematic.samples.ui.fragment.ListsFragment.newList";
 
-  @InjectView(android.R.id.list) ListView listView;
-  @InjectView(android.R.id.empty) TextView emptyView;
+  @Bind(android.R.id.list) ListView listView;
+  @Bind(android.R.id.empty) TextView emptyView;
 
   private ListsAdapter adapter;
 
@@ -68,7 +69,7 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
 
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    ButterKnife.inject(this, view);
+    ButterKnife.bind(this, view);
     listView.setEmptyView(emptyView);
     if (adapter != null) {
       listView.setAdapter(adapter);
@@ -78,7 +79,7 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   }
 
   @Override public void onDestroyView() {
-    ButterKnife.reset(this);
+    ButterKnife.unbind(this);
     super.onDestroyView();
   }
 
