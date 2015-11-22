@@ -41,6 +41,7 @@ import net.simonvt.schematic.annotation.Check;
 import net.simonvt.schematic.annotation.ConflictResolutionType;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DefaultValue;
+import net.simonvt.schematic.annotation.IfNotExists;
 import net.simonvt.schematic.annotation.NotNull;
 import net.simonvt.schematic.annotation.PrimaryKey;
 import net.simonvt.schematic.annotation.References;
@@ -52,6 +53,8 @@ public class TableWriter {
   ProcessingEnvironment processingEnv;
 
   String name;
+  boolean ifNotExists;
+
   Check checkConstraint;
 
   VariableElement table;
@@ -73,6 +76,9 @@ public class TableWriter {
       TypeMirror mirror = e.getTypeMirror();
       columnsClass = (TypeElement) env.getTypeUtils().asElement(mirror);
     }
+
+    IfNotExists ifNotExists = table.getAnnotation(IfNotExists.class);
+    this.ifNotExists = ifNotExists != null;
 
     List<? extends TypeMirror> interfaces = columnsClass.getInterfaces();
 
@@ -114,7 +120,11 @@ public class TableWriter {
       throws IOException {
     List<ClassName> classes = new ArrayList<>();
 
-    StringBuilder query = new StringBuilder("\"CREATE TABLE " + name + " (");
+    StringBuilder query = new StringBuilder("\"CREATE TABLE ");
+    if (ifNotExists) {
+      query.append("IF NOT EXISTS ");
+    }
+    query.append(name).append(" (");
 
     final int primaryKeyCount = primaryKeys.size();
 

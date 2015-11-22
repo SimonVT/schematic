@@ -20,6 +20,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.ExecOnCreate;
+import net.simonvt.schematic.annotation.IfNotExists;
 import net.simonvt.schematic.annotation.OnConfigure;
 import net.simonvt.schematic.annotation.OnCreate;
 import net.simonvt.schematic.annotation.OnUpgrade;
@@ -36,7 +37,7 @@ public final class NotesDatabase {
 
   public static class Tables {
 
-    @Table(ListColumns.class) public static final String LISTS = "lists";
+    @Table(ListColumns.class) @IfNotExists public static final String LISTS = "lists";
   }
 
   @Table(NoteColumns.class) public static final String NOTES = "notes";
