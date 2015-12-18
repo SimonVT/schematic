@@ -24,6 +24,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.processing.Filer;
@@ -273,7 +274,6 @@ public class TableWriter {
     for (VariableElement element : columns) {
       String elmName = element.getSimpleName().toString();
       elmName = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, elmName);
-      String colName = element.getConstantValue().toString();
 
       DataType dataType = element.getAnnotation(DataType.class);
       DataType.Type type = dataType.value();
@@ -282,45 +282,22 @@ public class TableWriter {
 
       switch (type) {
         case INTEGER:
-          MethodSpec intSpec = MethodSpec.methodBuilder(elmName)
-              .addModifiers(Modifier.PUBLIC)
-              .returns(ClassName.get(valuesPackage, className))
-              .addParameter(int.class, "value")
-              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
-              .addStatement("return this")
-              .build();
-          valuesBuilder.addMethod(intSpec);
-
-          MethodSpec longSpec = MethodSpec.methodBuilder(elmName)
-              .addModifiers(Modifier.PUBLIC)
-              .returns(ClassName.get(valuesPackage, className))
-              .addParameter(long.class, "value")
-              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
-              .addStatement("return this")
-              .build();
-          valuesBuilder.addMethod(longSpec);
+          valuesBuilder.addMethod(
+              makePutMethodSpec(valuesPackage, className, elmName, column, Integer.class));
+          valuesBuilder.addMethod(
+              makePutMethodSpec(valuesPackage, className, elmName, column, Long.class));
           break;
 
         case REAL:
-          MethodSpec floatSpec = MethodSpec.methodBuilder(elmName)
-              .addModifiers(Modifier.PUBLIC)
-              .returns(ClassName.get(valuesPackage, className))
-              .addParameter(float.class, "value")
-              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
-              .addStatement("return this")
-              .build();
-          valuesBuilder.addMethod(floatSpec);
+          valuesBuilder.addMethod(
+              makePutMethodSpec(valuesPackage, className, elmName, column, Float.class));
+          valuesBuilder.addMethod(
+              makePutMethodSpec(valuesPackage, className, elmName, column, Double.class));
           break;
 
         case TEXT:
-          MethodSpec stringSpec = MethodSpec.methodBuilder(elmName)
-              .addModifiers(Modifier.PUBLIC)
-              .returns(ClassName.get(valuesPackage, className))
-              .addParameter(String.class, "value")
-              .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
-              .addStatement("return this")
-              .build();
-          valuesBuilder.addMethod(stringSpec);
+          valuesBuilder.addMethod(
+              makePutMethodSpec(valuesPackage, className, elmName, column, String.class));
           break;
 
         case BLOB:
@@ -339,6 +316,16 @@ public class TableWriter {
     javaFile.writeTo(out);
     out.flush();
     out.close();
+  }
+
+  private MethodSpec makePutMethodSpec(String valuesPackage, String className, String elmName, String column, Type paramType) {
+    return MethodSpec.methodBuilder(elmName)
+        .addModifiers(Modifier.PUBLIC)
+        .returns(ClassName.get(valuesPackage, className))
+        .addParameter(paramType, "value")
+        .addStatement("values.put($T.$L, value)", ClassName.get(columnsClass), column)
+        .addStatement("return this")
+        .build();
   }
 
   private void error(String error) {
