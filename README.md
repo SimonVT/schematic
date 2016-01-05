@@ -40,13 +40,17 @@ public final class NotesProvider {
 
   public static final String AUTHORITY = "net.simonvt.schematic.sample.NotesProvider";
 
+  interface Path {
+      String LISTS = "lists";
+  }
+
   @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
 
     @ContentUri(
         path = Path.LISTS,
         type = "vnd.android.cursor.dir/list",
         defaultSort = ListColumns.TITLE + " ASC")
-    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists")
+    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
   }
 ```
 
