@@ -25,15 +25,14 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 /**
  * An inner class of a {@link net.simonvt.schematic.annotation.ContentProvider} that contains Uri's
  * which can be queried.
- * <pre>{@code
+ * <pre><code>
  * &#064;TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
  *
  *   &#064;ContentUri( path = Path.LISTS,
  *   type = "vnd.android.cursor.dir/list",
  *   defaultSort = ListColumns.TITLE + " ASC")
  *   public static final Uri LISTS = buildUri(Path.LISTS);
- * }
- * }</pre>
+ * }</code></pre>
  */
 @Retention(CLASS) @Target(TYPE)
 public @interface TableEndpoint {

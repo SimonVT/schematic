@@ -25,7 +25,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 /**
  * This {@code Uri} is set as notifications {@code Uri} on the {@code Cursor} returned when querying
  * the defined paths.
- * <pre>{@code
+ * <pre><code>
  * &#064;ContentUri(
  *   path = "lists",
  *   type = "vnd.android.cursor.dir/list",
@@ -35,7 +35,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  *       "lists/withItems"
  *   })
  * public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
- * }</pre>
+ * </code></pre>
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface NotificationUri {

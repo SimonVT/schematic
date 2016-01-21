@@ -24,7 +24,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * The class annotated describes a SQLiteOpenHelper.
- * <pre>{@code
+ * <pre><code>
  * &#064;Database(version = NotesDatabase.VERSION)
  * public final class NotesDatabase {
  *
@@ -33,8 +33,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  *   &#064;Table(ListColumns.class) public static final String LISTS = "lists";
  *
  *   &#064;Table(NoteColumns.class) public static final String NOTES = "notes";
- * }
- * }</pre>
+ * }</code></pre>
  */
 @Retention(CLASS) @Target(TYPE)
 public @interface Database {

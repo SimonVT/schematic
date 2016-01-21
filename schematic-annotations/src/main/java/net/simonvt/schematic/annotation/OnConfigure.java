@@ -24,11 +24,10 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * Method to be called when the database connection is being configured.
- * <pre>{@code
+ * <pre><code>
  * &#064;OnConfigure public static void onConfigure(SQLiteDatabase db) {
  *   ...
- * }
- * }</pre>
+ * }</code></pre>
  */
 @Retention(CLASS) @Target(METHOD)
 public @interface OnConfigure {

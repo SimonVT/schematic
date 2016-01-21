@@ -24,11 +24,10 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * Method to be called when creating the database.
- * <pre>{@code
+ * <pre><code>
  * &#064;OnCreate public static void onCreate(Context context, SQLiteDatabase db) {
  *   ...
- * }
- * }</pre>
+ * }</code></pre>
  */
 @Retention(CLASS) @Target(METHOD)
 public @interface OnCreate {
