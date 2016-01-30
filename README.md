@@ -43,10 +43,10 @@ public final class NotesProvider {
   @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
 
     @ContentUri(
-        path = Path.LISTS,
+        path = "lists",
         type = "vnd.android.cursor.dir/list",
         defaultSort = ListColumns.TITLE + " ASC")
-    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists")
+    public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
   }
 ```
 
