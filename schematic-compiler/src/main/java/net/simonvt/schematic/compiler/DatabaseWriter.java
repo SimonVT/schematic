@@ -187,8 +187,8 @@ public class DatabaseWriter {
     MethodSpec constructor = MethodSpec.constructorBuilder()
         .addModifiers(Modifier.PRIVATE)
         .addParameter(Clazz.CONTEXT, "context")
-        .addStatement("super(context, $S, null, DATABASE_VERSION)", fileName)
-        .addStatement("this.context = context")
+        .addStatement("super(context.getApplicationContext(), $S, null, DATABASE_VERSION)", fileName)
+        .addStatement("this.context = context.getApplicationContext()")
         .build();
     databaseBuilder.addMethod(constructor);
 
