@@ -19,7 +19,7 @@ public interface ListColumns {
 ```
 
 
-Then create a database that uses this column
+Then create a database that uses this column class
 
 ```java
 @Database(version = NotesDatabase.VERSION)
