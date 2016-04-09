@@ -49,6 +49,7 @@ import net.simonvt.schematic.annotation.ContentUri;
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.InexactContentUri;
 import net.simonvt.schematic.annotation.InsertUri;
+import net.simonvt.schematic.annotation.Join;
 import net.simonvt.schematic.annotation.MapColumns;
 import net.simonvt.schematic.annotation.NotificationUri;
 import net.simonvt.schematic.annotation.NotifyBulkInsert;
@@ -136,6 +137,7 @@ public class ContentProviderWriter {
   Map<String, ExecutableElement> notifyBulkInsert = new HashMap<>();
   Map<String, ExecutableElement> notifyUpdate = new HashMap<>();
   Map<String, ExecutableElement> notifyDelete = new HashMap<>();
+  Map<String, ExecutableElement> joinCalls = new HashMap<>();
   Map<String, ExecutableElement> whereCalls = new HashMap<>();
   Map<String, ExecutableElement> insertUris = new HashMap<>();
 
@@ -223,9 +225,9 @@ public class ContentProviderWriter {
             contract.path = path;
 
             String parent = ((TypeElement) enclosedElement).getQualifiedName().toString();
-            contract.name = enclosedElement.getSimpleName().toString().toUpperCase() + "_" + element
-                .getSimpleName()
-                .toString();
+            contract.name = enclosedElement.getSimpleName().toString().toUpperCase()
+                + "_"
+                + element.getSimpleName().toString();
             contract.classQualifiedName = parent;
 
             String contentTable = contentUri.table();
@@ -376,6 +378,11 @@ public class ContentProviderWriter {
             for (String path : paths) {
               this.notifyDelete.put(path, (ExecutableElement) element);
             }
+          }
+
+          Join join = element.getAnnotation(Join.class);
+          if (join != null) {
+            this.joinCalls.put(join.path(), (ExecutableElement) element);
           }
 
           Where where = element.getAnnotation(Where.class);
@@ -724,9 +731,50 @@ public class ContentProviderWriter {
               .endControlFlow();
         }
 
-        StringBuilder tableBuilder = new StringBuilder(uri.table);
         if (uri.join != null) {
-          tableBuilder.append(" ").append(uri.join);
+          spec.addStatement("$T join = $S", String.class, uri.join);
+        }
+
+        ExecutableElement joins = joinCalls.get(uri.path);
+        if (joins != null) {
+          String parent = ((TypeElement) joins.getEnclosingElement()).getQualifiedName().toString();
+          String methodName = joins.getSimpleName().toString();
+
+          List<? extends VariableElement> parameters = joins.getParameters();
+          StringBuilder params = new StringBuilder();
+          boolean first = true;
+          for (VariableElement param : parameters) {
+            if (first) {
+              first = false;
+            } else {
+              params.append(", ");
+            }
+
+            TypeMirror paramType = param.asType();
+            if (Clazz.URI.equals(ClassName.get(paramType))) {
+              params.append("uri");
+            } else {
+              throw new IllegalArgumentException(
+                  "@Join does not support parameter " + paramType.toString());
+            }
+          }
+
+          if (uri.join == null) {
+            spec.addStatement("$T join = \"\"", String.class);
+          }
+
+          spec.addStatement("$T joins = $L.$L($L)", ArrayTypeName.of(String.class), parent,
+              methodName, params.toString())
+              .beginControlFlow("for ($T j : joins)", String.class)
+              .addStatement("join += \" \"")
+              .addStatement("join += j")
+              .endControlFlow();
+        }
+
+        if (uri.join != null || joins != null) {
+          spec.addStatement("$T table = $S + join", String.class, uri.table);
+        } else {
+          spec.addStatement("$T table = $S", String.class, uri.table);
         }
 
         spec.addStatement("final String groupBy = $S", uri.groupBy)
@@ -735,8 +783,8 @@ public class ContentProviderWriter {
 
         // TODO: The whereBuilder part is kind of gross
         spec.addStatement(
-            "$T cursor = builder.table($S)\n$L.query(db, projection, groupBy, having, sortOrder, limit)",
-            Clazz.CURSOR, tableBuilder.toString(), whereBuilder.toString());
+            "$T cursor = builder.table(table)\n$L.query(db, projection, groupBy, having, sortOrder, limit)",
+            Clazz.CURSOR, whereBuilder.toString());
 
         Element notifyUri = notificationUris.get(uri.path);
         if (notifyUri != null) {
