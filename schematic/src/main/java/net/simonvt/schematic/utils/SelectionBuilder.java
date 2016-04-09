@@ -43,9 +43,9 @@ public class SelectionBuilder {
   private static final boolean LOGV = false;
 
   private String table = null;
-  private Map<String, String> projectionMap = new HashMap<String, String>();
+  private Map<String, String> projectionMap = new HashMap<>();
   private StringBuilder selection = new StringBuilder();
-  private ArrayList<String> selectionArgs = new ArrayList<String>();
+  private ArrayList<String> selectionArgs = new ArrayList<>();
 
   /** Reset any internal state, allowing this builder to be recycled. */
   public SelectionBuilder reset() {

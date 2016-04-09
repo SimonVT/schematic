@@ -54,7 +54,7 @@ public class SchematicProcessor extends AbstractProcessor {
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
-    Set<String> supportedTypes = new LinkedHashSet<String>();
+    Set<String> supportedTypes = new LinkedHashSet<>();
 
     for (Class<? extends Annotation> annotation : ANNOTATIONS) {
       supportedTypes.add(annotation.getCanonicalName());

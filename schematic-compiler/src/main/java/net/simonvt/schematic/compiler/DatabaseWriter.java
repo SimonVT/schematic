@@ -59,9 +59,9 @@ public class DatabaseWriter {
 
   String fileName;
 
-  List<VariableElement> tables = new ArrayList<VariableElement>();
+  List<VariableElement> tables = new ArrayList<>();
 
-  List<VariableElement> execOnCreate = new ArrayList<VariableElement>();
+  List<VariableElement> execOnCreate = new ArrayList<>();
 
   ExecutableElement onCreate;
 

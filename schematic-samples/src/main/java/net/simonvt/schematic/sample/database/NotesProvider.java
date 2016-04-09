@@ -62,7 +62,7 @@ public final class NotesProvider {
   @TableEndpoint(table = Tables.LISTS) public static class Lists {
 
     @MapColumns public static Map<String, String> mapColumns() {
-      Map<String, String> map = new HashMap<String, String>();
+      Map<String, String> map = new HashMap<>();
 
       map.put(ListColumns.NOTES, LIST_COUNT);
 

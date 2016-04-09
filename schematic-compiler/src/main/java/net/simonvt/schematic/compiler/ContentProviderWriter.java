@@ -129,17 +129,17 @@ public class ContentProviderWriter {
   ExecutableElement defaultNotifyUpdate;
   ExecutableElement defaultNotifyDelete;
 
-  List<UriContract> uris = new ArrayList<UriContract>();
-  List<String> paths = new ArrayList<String>();
-  Map<String, Element> notificationUris = new HashMap<String, Element>();
-  Map<String, ExecutableElement> notifyInsert = new HashMap<String, ExecutableElement>();
-  Map<String, ExecutableElement> notifyBulkInsert = new HashMap<String, ExecutableElement>();
-  Map<String, ExecutableElement> notifyUpdate = new HashMap<String, ExecutableElement>();
-  Map<String, ExecutableElement> notifyDelete = new HashMap<String, ExecutableElement>();
-  Map<String, ExecutableElement> whereCalls = new HashMap<String, ExecutableElement>();
-  Map<String, ExecutableElement> insertUris = new HashMap<String, ExecutableElement>();
+  List<UriContract> uris = new ArrayList<>();
+  List<String> paths = new ArrayList<>();
+  Map<String, Element> notificationUris = new HashMap<>();
+  Map<String, ExecutableElement> notifyInsert = new HashMap<>();
+  Map<String, ExecutableElement> notifyBulkInsert = new HashMap<>();
+  Map<String, ExecutableElement> notifyUpdate = new HashMap<>();
+  Map<String, ExecutableElement> notifyDelete = new HashMap<>();
+  Map<String, ExecutableElement> whereCalls = new HashMap<>();
+  Map<String, ExecutableElement> insertUris = new HashMap<>();
 
-  Map<Element, ExecutableElement> columnMaps = new HashMap<Element, ExecutableElement>();
+  Map<Element, ExecutableElement> columnMaps = new HashMap<>();
 
   public ContentProviderWriter(ProcessingEnvironment processingEnv, Elements elements,
       Element provider) {
