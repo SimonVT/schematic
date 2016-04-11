@@ -732,7 +732,7 @@ public class ContentProviderWriter {
         }
 
         if (uri.join != null) {
-          spec.addStatement("$T join = $S", String.class, uri.join);
+          spec.addStatement("$T join = \" \" + $S", String.class, uri.join);
         }
 
         ExecutableElement joins = joinCalls.get(uri.path);
