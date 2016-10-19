@@ -716,7 +716,9 @@ public class ContentProviderWriter {
             }
 
             TypeMirror paramType = param.asType();
-            if (Clazz.URI.equals(ClassName.get(paramType))) {
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
+              params.append("getContext()");
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
               throw new IllegalArgumentException(
@@ -751,7 +753,9 @@ public class ContentProviderWriter {
             }
 
             TypeMirror paramType = param.asType();
-            if (Clazz.URI.equals(ClassName.get(paramType))) {
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
+              params.append("getContext()");
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
               throw new IllegalArgumentException(
@@ -851,7 +855,9 @@ public class ContentProviderWriter {
             }
 
             TypeMirror paramType = param.asType();
-            if (Clazz.URI.equals(ClassName.get(paramType))) {
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
+              params.append("getContext()");
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else if (Clazz.CONTENT_VALUES.equals(ClassName.get(paramType))) {
               params.append("values");
@@ -926,7 +932,9 @@ public class ContentProviderWriter {
             }
 
             TypeMirror paramType = param.asType();
-            if (Clazz.URI.equals(ClassName.get(paramType))) {
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
+              params.append("getContext()");
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
               throw new IllegalArgumentException(
@@ -1055,7 +1063,9 @@ public class ContentProviderWriter {
             }
 
             TypeMirror paramType = param.asType();
-            if (Clazz.URI.equals(ClassName.get(paramType))) {
+            if (Clazz.CONTEXT.equals(ClassName.get(paramType))) {
+              params.append("getContext()");
+            } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
               throw new IllegalArgumentException(
