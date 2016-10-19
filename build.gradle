@@ -20,11 +20,12 @@ ext.libraries = [
 
   androidApt: 'com.neenbedankt.gradle.plugins:android-apt:1.8',
 
-  javapoet: 'com.squareup:javapoet:1.6.1',
+  javapoet: 'com.squareup:javapoet:1.7.0',
 
-  supportv4: 'com.android.support:support-v4:23.3.0',
+  supportv4: 'com.android.support:support-v4:24.2.1',
 
-  butterknife: 'com.jakewharton:butterknife:7.0.1',
+  butterknife: 'com.jakewharton:butterknife:8.4.0',
+  butterknifeCompiler: 'com.jakewharton:butterknife-compiler:8.4.0',
 
   guava: 'com.google.guava:guava:19.0'
 ]

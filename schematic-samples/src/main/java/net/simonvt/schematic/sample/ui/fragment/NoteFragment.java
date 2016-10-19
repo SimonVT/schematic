@@ -30,10 +30,10 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
-
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.Unbinder;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
 import net.simonvt.schematic.sample.database.NotesProvider.Notes;
@@ -53,7 +53,7 @@ public class NoteFragment extends Fragment {
   private static final String ARG_NOTE =
       "net.simonvt.schematic.samples.ui.fragment.NoteFragment.note";
   private static final String ARG_STATUS =
-          "net.simonvt.schematic.samples.ui.fragment.NoteFragment.status";
+      "net.simonvt.schematic.samples.ui.fragment.NoteFragment.status";
 
   private static final long NO_ID = -1L;
 
@@ -81,10 +81,12 @@ public class NoteFragment extends Fragment {
 
   private NoteListener listener;
 
-  @Bind(R.id.action) View actionView;
-  @Bind(R.id.actionText) TextView actionText;
-  @Bind(R.id.note) EditText noteView;
-  @Bind(R.id.statusSwitch) Switch statusView;
+  Unbinder unbinder;
+
+  @BindView(R.id.action) View actionView;
+  @BindView(R.id.actionText) TextView actionText;
+  @BindView(R.id.note) EditText noteView;
+  @BindView(R.id.statusSwitch) Switch statusView;
 
   @Override public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -109,7 +111,7 @@ public class NoteFragment extends Fragment {
 
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    ButterKnife.bind(this, view);
+    unbinder = ButterKnife.bind(this, view);
     if (noteId != NO_ID) {
       noteView.setText(note);
       statusView.setChecked(NoteColumns.STATUS_COMPLETED.equals(status));
@@ -121,7 +123,10 @@ public class NoteFragment extends Fragment {
   }
 
   @Override public void onDestroyView() {
-    ButterKnife.unbind(this);
+    if (unbinder != null) {
+      unbinder.unbind();
+      unbinder = null;
+    }
     super.onDestroyView();
   }
 

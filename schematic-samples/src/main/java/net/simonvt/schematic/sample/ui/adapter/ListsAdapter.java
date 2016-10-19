@@ -23,8 +23,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
-
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.ListColumns;
@@ -55,8 +54,8 @@ public class ListsAdapter extends CursorAdapter {
 
   static class ViewHolder {
 
-    @Bind(R.id.title) TextView title;
-    @Bind(R.id.notes) TextView notes;
+    @BindView(R.id.title) TextView title;
+    @BindView(R.id.notes) TextView notes;
 
     public ViewHolder(View view) {
       ButterKnife.bind(this, view);

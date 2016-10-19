@@ -18,6 +18,7 @@ dependencies {
   compile project(':schematic')
   compile parent.libraries.supportv4
   compile parent.libraries.butterknife
+  compile parent.libraries.butterknifeCompiler
 }
 
 android {

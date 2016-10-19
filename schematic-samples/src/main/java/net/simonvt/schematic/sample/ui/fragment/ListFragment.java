@@ -32,11 +32,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnItemClick;
+import butterknife.Unbinder;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
 import net.simonvt.schematic.sample.database.NotesProvider.Lists;
@@ -74,9 +74,10 @@ public class ListFragment extends Fragment implements LoaderManager.LoaderCallba
 
   private ListAdapter adapter;
 
-  @Bind(android.R.id.list) ListView listView;
+  Unbinder unbinder;
 
-  @Bind(android.R.id.empty) TextView emptyView;
+  @BindView(android.R.id.list) ListView listView;
+  @BindView(android.R.id.empty) TextView emptyView;
 
   @Override public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -98,7 +99,7 @@ public class ListFragment extends Fragment implements LoaderManager.LoaderCallba
 
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    ButterKnife.bind(this, view);
+    unbinder = ButterKnife.bind(this, view);
     listView.setEmptyView(emptyView);
     if (adapter != null) {
       listView.setAdapter(adapter);
@@ -108,7 +109,10 @@ public class ListFragment extends Fragment implements LoaderManager.LoaderCallba
   }
 
   @Override public void onDestroyView() {
-    ButterKnife.unbind(this);
+    if (unbinder != null) {
+      unbinder.unbind();
+      unbinder = null;
+    }
     super.onDestroyView();
   }
 

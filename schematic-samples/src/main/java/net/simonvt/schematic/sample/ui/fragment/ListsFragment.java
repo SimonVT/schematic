@@ -28,11 +28,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import butterknife.Bind;
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnItemClick;
+import butterknife.Unbinder;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NotesProvider.Lists;
 import net.simonvt.schematic.sample.ui.adapter.ListsAdapter;
@@ -50,8 +50,10 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   private static final String DIALOG_NEW_LIST =
       "net.simonvt.schematic.samples.ui.fragment.ListsFragment.newList";
 
-  @Bind(android.R.id.list) ListView listView;
-  @Bind(android.R.id.empty) TextView emptyView;
+  Unbinder unbinder;
+
+  @BindView(android.R.id.list) ListView listView;
+  @BindView(android.R.id.empty) TextView emptyView;
 
   private ListsAdapter adapter;
 
@@ -69,7 +71,7 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
 
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    ButterKnife.bind(this, view);
+    unbinder = ButterKnife.bind(this, view);
     listView.setEmptyView(emptyView);
     if (adapter != null) {
       listView.setAdapter(adapter);
@@ -79,7 +81,10 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   }
 
   @Override public void onDestroyView() {
-    ButterKnife.unbind(this);
+    if (unbinder != null) {
+      unbinder.unbind();
+      unbinder = null;
+    }
     super.onDestroyView();
   }
 
@@ -92,7 +97,8 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   }
 
   @Override public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-    return new CursorLoader(getActivity(), Lists.CONTENT_URI, ListsAdapter.PROJECTION, null, null, null);
+    return new CursorLoader(getActivity(), Lists.CONTENT_URI, ListsAdapter.PROJECTION, null, null,
+        null);
   }
 
   @Override public void onLoadFinished(Loader loader, Cursor data) {
