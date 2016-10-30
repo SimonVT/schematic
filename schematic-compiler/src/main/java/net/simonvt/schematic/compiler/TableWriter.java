@@ -40,6 +40,7 @@ import javax.tools.JavaFileObject;
 import net.simonvt.schematic.annotation.AutoIncrement;
 import net.simonvt.schematic.annotation.Check;
 import net.simonvt.schematic.annotation.ConflictResolutionType;
+import net.simonvt.schematic.annotation.Constraints;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DefaultValue;
 import net.simonvt.schematic.annotation.IfNotExists;
@@ -48,6 +49,7 @@ import net.simonvt.schematic.annotation.PrimaryKey;
 import net.simonvt.schematic.annotation.References;
 import net.simonvt.schematic.annotation.Table;
 import net.simonvt.schematic.annotation.Unique;
+import net.simonvt.schematic.annotation.UniqueConstraint;
 
 public class TableWriter {
 
@@ -57,6 +59,7 @@ public class TableWriter {
   boolean ifNotExists;
 
   Check checkConstraint;
+  List<UniqueConstraint> uniqueConstraints = new ArrayList<>();
 
   VariableElement table;
 
@@ -81,6 +84,8 @@ public class TableWriter {
     IfNotExists ifNotExists = table.getAnnotation(IfNotExists.class);
     this.ifNotExists = ifNotExists != null;
 
+    uniqueConstraints = fillEntireTableConstrains(columnsClass);
+
     List<? extends TypeMirror> interfaces = columnsClass.getInterfaces();
 
     checkConstraint = columnsClass.getAnnotation(Check.class);
@@ -91,6 +96,23 @@ public class TableWriter {
       TypeElement parent = (TypeElement) env.getTypeUtils().asElement(mirror);
       findColumns(parent.getEnclosedElements());
     }
+  }
+
+  private static List<UniqueConstraint> fillEntireTableConstrains(TypeElement columnsClass) {
+    List<UniqueConstraint> constraints = new ArrayList<>();
+
+    Constraints entireTableConstraints = columnsClass.getAnnotation(Constraints.class);
+    if (entireTableConstraints != null) {
+      for (UniqueConstraint uniqueConstraint : entireTableConstraints.unique()) {
+        constraints.add(uniqueConstraint);
+      }
+    }
+
+    UniqueConstraint uniqueConstraint = columnsClass.getAnnotation(UniqueConstraint.class);
+    if (uniqueConstraint != null) {
+      constraints.add(uniqueConstraint);
+    }
+    return constraints;
   }
 
   private void findColumns(List<? extends Element> elements) {
@@ -217,6 +239,12 @@ public class TableWriter {
       writeCheckConstraint(query, checkConstraint);
     }
 
+    if (!uniqueConstraints.isEmpty()) {
+      for (UniqueConstraint uniqueConstraint : uniqueConstraints) {
+        writeUniqueConstraint(query, uniqueConstraint);
+      }
+    }
+
     query.append(")\"");
 
     FieldSpec tableSpec = FieldSpec.builder(String.class, table.getSimpleName().toString())
@@ -225,6 +253,22 @@ public class TableWriter {
         .build();
 
     databaseBuilder.addField(tableSpec);
+  }
+
+  private static void writeUniqueConstraint(StringBuilder query, UniqueConstraint uniqueConstraint) {
+    query.append(",\"\n + \"");
+    String name = uniqueConstraint.name();
+    if (name.length() > 0) {
+      query.append(' ').append("CONSTRAINT ").append(name);
+    }
+    query.append(' ').append("UNIQUE ( ");
+    int size = uniqueConstraint.columns().length;
+    for (int i = 0; i < size; i++) {
+      if (i != 0)  query.append(", ");
+      query.append(uniqueConstraint.columns()[i]);
+    }
+    query.append(" )");
+    writeOnConflict(query,uniqueConstraint.onConflict());
   }
 
   private void writeCheckConstraint(StringBuilder query, Check check) {

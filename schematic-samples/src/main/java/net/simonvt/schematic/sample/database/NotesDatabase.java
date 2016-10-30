@@ -38,6 +38,8 @@ public final class NotesDatabase {
   public static class Tables {
 
     @Table(ListColumns.class) @IfNotExists public static final String LISTS = "lists";
+
+    @Table(TagColumns.class) @IfNotExists public static final String NOTES_TAGS = "notes_tags";
   }
 
   @Table(NoteColumns.class) public static final String NOTES = "notes";

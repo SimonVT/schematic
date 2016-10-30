@@ -48,6 +48,12 @@
       <requestFocus/>
     </EditText>
   </FrameLayout>
+  <EditText
+      android:id="@+id/tags"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:hint="comma separated list of tags"
+      />
 
   <LinearLayout
       android:id="@+id/action"

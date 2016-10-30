@@ -49,6 +49,7 @@ public final class NotesProvider {
     String LISTS = "lists";
     String NOTES = "notes";
     String FROM_LIST = "fromList";
+    String TAGS = "tags";
   }
 
   private static Uri buildUri(String... paths) {
@@ -165,6 +166,20 @@ public final class NotesProvider {
       return new Uri[] {
           withId(noteId), fromList(listId), Lists.withId(listId),
       };
+    }
+  }
+
+  @TableEndpoint(table = Tables.NOTES_TAGS)
+  public static class NotesTags {
+    @InexactContentUri(
+        name = "TAGS_FOR_NOTE",
+        path = Path.NOTES + "/#/" + Path.TAGS,
+        type = "vnd.android.cursor.dir/note/tags",
+        whereColumn = TagColumns.NOTE_ID,
+        pathSegment = 1
+    )
+    public static Uri fromNote(long noteId) {
+      return buildUri(Path.NOTES, String.valueOf(noteId), Path.TAGS);
     }
   }
 }
