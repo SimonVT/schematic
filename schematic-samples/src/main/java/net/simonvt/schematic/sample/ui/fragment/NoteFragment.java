@@ -19,8 +19,13 @@ package net.simonvt.schematic.sample.ui.fragment;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,9 +39,14 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+
+import net.simonvt.schematic.Cursors;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
+import net.simonvt.schematic.sample.database.NotesProvider;
 import net.simonvt.schematic.sample.database.NotesProvider.Notes;
+import net.simonvt.schematic.sample.database.TagColumns;
+import net.simonvt.schematic.sample.provider.values.Notes_tagsValuesBuilder;
 
 public class NoteFragment extends Fragment {
 
@@ -87,6 +97,7 @@ public class NoteFragment extends Fragment {
   @BindView(R.id.actionText) TextView actionText;
   @BindView(R.id.note) EditText noteView;
   @BindView(R.id.statusSwitch) Switch statusView;
+  @BindView(R.id.tags) EditText tags;
 
   @Override public void onAttach(Activity activity) {
     super.onAttach(activity);
@@ -112,10 +123,35 @@ public class NoteFragment extends Fragment {
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     unbinder = ButterKnife.bind(this, view);
+    LoaderManager.LoaderCallbacks<Cursor> callBack = new LoaderManager.LoaderCallbacks<Cursor>() {
+      @Override
+      public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(getActivity(), NotesProvider.NotesTags.fromNote(noteId), null, null, null, null);
+      }
+
+      @Override
+      public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        data.moveToPosition(-1);
+        StringBuffer buffer = new StringBuffer();
+        while (data.moveToNext()) {
+          if (buffer.length() > 0) {
+            buffer.append(",");
+          }
+          buffer.append(Cursors.getString(data, TagColumns.NAME));
+        }
+        tags.setText(buffer.toString());
+      }
+
+      @Override
+      public void onLoaderReset(Loader<Cursor> loader) {
+
+      }
+    };
     if (noteId != NO_ID) {
       noteView.setText(note);
       statusView.setChecked(NoteColumns.STATUS_COMPLETED.equals(status));
       actionText.setText(R.string.update);
+      getLoaderManager().initLoader(1, null, callBack);
     } else {
       statusView.setChecked(false);
       actionText.setText(R.string.insert);
@@ -159,6 +195,7 @@ public class NoteFragment extends Fragment {
     } else {
       status = NoteColumns.STATUS_NEW;
     }
+    final String tagList = tags.getText().toString();
     final Context appContext = getActivity().getApplicationContext();
     if (noteId == NO_ID) {
       new Thread(new Runnable() {
@@ -167,20 +204,38 @@ public class NoteFragment extends Fragment {
           cv.put(NoteColumns.LIST_ID, listId);
           cv.put(NoteColumns.NOTE, note);
           cv.put(NoteColumns.STATUS, status);
-          appContext.getContentResolver().insert(Notes.CONTENT_URI, cv);
+          Uri newUri = appContext.getContentResolver().insert(Notes.CONTENT_URI, cv);
+          long newId =  Long.parseLong(newUri.getLastPathSegment());
+          insertTags(newId, tagList, appContext);
         }
       }).start();
     } else {
+      final long id = noteId;
       new Thread(new Runnable() {
         @Override public void run() {
           ContentValues cv = new ContentValues();
           cv.put(NoteColumns.NOTE, note);
           cv.put(NoteColumns.STATUS, status);
           appContext.getContentResolver().update(Notes.withId(noteId), cv, null, null);
+          appContext.getContentResolver().delete(NotesProvider.NotesTags.fromNote(noteId), null, null);
+          insertTags(id, tagList, appContext);
         }
       }).start();
     }
 
     listener.onNoteChange();
+  }
+
+  private static void insertTags(long newId, String tagList, Context appContext) {
+    String[] tagNames = tagList.split(",");
+    ContentValues[] tagValues = new ContentValues[tagNames.length];
+    for (int i = 0; i < tagNames.length; i++) {
+      tagValues[i] = new Notes_tagsValuesBuilder()
+          .noteId(newId)
+          .name(tagNames[i])
+          .values();
+    }
+    appContext.getContentResolver()
+        .bulkInsert(NotesProvider.NotesTags.fromNote(newId), tagValues);
   }
 }
