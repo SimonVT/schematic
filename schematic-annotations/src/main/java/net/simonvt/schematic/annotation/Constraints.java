@@ -10,5 +10,13 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.SOURCE) @Target(ElementType.TYPE)
 public @interface Constraints {
-    UniqueConstraint[] unique();
+
+    /** list of unique constraints */
+    UniqueConstraint[] unique() default {};
+
+    /** list of check constraints */
+    Check[] check() default {};
+
+    /** list of foreign key constraints */
+    ForeignKeyConstraint[] foreignKey() default {};
 }

@@ -17,6 +17,7 @@
 package net.simonvt.schematic.compiler;
 
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Strings;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -43,9 +45,11 @@ import net.simonvt.schematic.annotation.ConflictResolutionType;
 import net.simonvt.schematic.annotation.Constraints;
 import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DefaultValue;
+import net.simonvt.schematic.annotation.ForeignKeyConstraint;
 import net.simonvt.schematic.annotation.IfNotExists;
 import net.simonvt.schematic.annotation.NotNull;
 import net.simonvt.schematic.annotation.PrimaryKey;
+import net.simonvt.schematic.annotation.PrimaryKeyConstraint;
 import net.simonvt.schematic.annotation.References;
 import net.simonvt.schematic.annotation.Table;
 import net.simonvt.schematic.annotation.Unique;
@@ -58,15 +62,16 @@ public class TableWriter {
   String name;
   boolean ifNotExists;
 
-  Check checkConstraint;
-  List<UniqueConstraint> uniqueConstraints = new ArrayList<>();
+  private List<UniqueConstraint> uniqueConstraints = new ArrayList<>();
+  private List<Check> checkConstraints = new ArrayList<>();
+  private List<ForeignKeyConstraint> foreignKeyConstraints = new ArrayList<>();
+  private PrimaryKeyConstraint tableLevelPrimaryKey;
 
   VariableElement table;
 
   TypeElement columnsClass;
 
   List<VariableElement> columns = new ArrayList<>();
-
   List<String> primaryKeys = new ArrayList<>();
 
   public TableWriter(ProcessingEnvironment env, VariableElement table) {
@@ -84,11 +89,9 @@ public class TableWriter {
     IfNotExists ifNotExists = table.getAnnotation(IfNotExists.class);
     this.ifNotExists = ifNotExists != null;
 
-    uniqueConstraints = fillEntireTableConstrains(columnsClass);
+    fillEntireTableConstrains(columnsClass);
 
     List<? extends TypeMirror> interfaces = columnsClass.getInterfaces();
-
-    checkConstraint = columnsClass.getAnnotation(Check.class);
 
     findColumns(columnsClass.getEnclosedElements());
 
@@ -98,21 +101,38 @@ public class TableWriter {
     }
   }
 
-  private static List<UniqueConstraint> fillEntireTableConstrains(TypeElement columnsClass) {
-    List<UniqueConstraint> constraints = new ArrayList<>();
-
+  private void fillEntireTableConstrains(TypeElement columnsClass) {
     Constraints entireTableConstraints = columnsClass.getAnnotation(Constraints.class);
     if (entireTableConstraints != null) {
       for (UniqueConstraint uniqueConstraint : entireTableConstraints.unique()) {
-        constraints.add(uniqueConstraint);
+        uniqueConstraints.add(uniqueConstraint);
+      }
+
+      for (Check checkConstraint : entireTableConstraints.check()) {
+        checkConstraints.add(checkConstraint);
+      }
+
+      for (ForeignKeyConstraint foreignKey : entireTableConstraints.foreignKey()) {
+        foreignKeyConstraints.add(foreignKey);
       }
     }
 
     UniqueConstraint uniqueConstraint = columnsClass.getAnnotation(UniqueConstraint.class);
     if (uniqueConstraint != null) {
-      constraints.add(uniqueConstraint);
+      uniqueConstraints.add(uniqueConstraint);
     }
-    return constraints;
+
+    Check checkConstraint = columnsClass.getAnnotation(Check.class);
+    if (checkConstraint != null) {
+      checkConstraints.add(checkConstraint);
+    }
+
+    ForeignKeyConstraint foreignKey = columnsClass.getAnnotation(ForeignKeyConstraint.class);
+    if (foreignKey != null) {
+      foreignKeyConstraints.add(foreignKey);
+    }
+
+    tableLevelPrimaryKey = columnsClass.getAnnotation(PrimaryKeyConstraint.class);
   }
 
   private void findColumns(List<? extends Element> elements) {
@@ -220,28 +240,42 @@ public class TableWriter {
       }
     }
 
-    if (primaryKeyCount > 1) {
-      query.append(",\"\n + \"PRIMARY KEY (");
-      first = true;
-      for (String columnName : primaryKeys) {
-        if (!first) {
-          query.append(",");
-        } else {
-          first = false;
-        }
-        query.append(columnName);
-      }
-      query.append(")");
+    if (primaryKeyCount > 0 && tableLevelPrimaryKey != null) {
+      error(String.format(
+              "Only one primary key can be defined for table. " +
+                      "Use PrimaryKey or PrimaryKeyConstraint. Not both. " +
+              "Found in %s", tableClassName));
     }
 
-    if (checkConstraint != null) {
-      query.append(",\"\n + \"");
+    if (primaryKeyCount > 1) {
+      processingEnv.getMessager().printMessage(Kind.WARNING,
+              String.format("DEPRECATION. Define multi column primary key with " +
+                      "PrimaryKeyConstrain annotation instead of PrimaryKey. Found in %s",
+                      tableClassName));
+      writePrimaryKey(query, primaryKeys, "", ConflictResolutionType.NONE);
+    }
+
+    if (tableLevelPrimaryKey != null) {
+      writePrimaryKey(query,
+              Arrays.asList(tableLevelPrimaryKey.columns()),
+              tableLevelPrimaryKey.name(),
+              tableLevelPrimaryKey.onConflict());
+    }
+
+    for (Check checkConstraint : checkConstraints) {
+      query.append( ",\"\n + \"");
       writeCheckConstraint(query, checkConstraint);
     }
 
     if (!uniqueConstraints.isEmpty()) {
       for (UniqueConstraint uniqueConstraint : uniqueConstraints) {
         writeUniqueConstraint(query, uniqueConstraint);
+      }
+    }
+
+    if (!foreignKeyConstraints.isEmpty()) {
+      for (ForeignKeyConstraint foreignKey : foreignKeyConstraints) {
+        writeForeignKeyConstraint(query, foreignKey);
       }
     }
 
@@ -255,24 +289,72 @@ public class TableWriter {
     databaseBuilder.addField(tableSpec);
   }
 
-  private static void writeUniqueConstraint(StringBuilder query, UniqueConstraint uniqueConstraint) {
+  private static void writeForeignKeyConstraint(StringBuilder query, ForeignKeyConstraint foreignKey) {
     query.append(",\"\n + \"");
-    String name = uniqueConstraint.name();
+    if (foreignKey.name().length() > 0) {
+      query.append(' ').append("CONSTRAINT ").append(foreignKey.name());
+    }
+    query.append(' ').append("FOREIGN KEY").append(" (");
+    for (int i = 0; i < foreignKey.columns().length; i++) {
+      if (i != 0) {
+        query.append(", ");
+      }
+      query.append(foreignKey.columns()[i]);
+    }
+    query.append(") ").append("REFERENCES").append(' ')
+            .append(foreignKey.referencedTable())
+            .append(" (");
+    for (int i = 0; i < foreignKey.referencedColumns().length; i++) {
+      if (i != 0) {
+        query.append(", ");
+      }
+      query.append(foreignKey.referencedColumns()[i]);
+    }
+    query.append(')');
+
+  }
+
+  private static void writePrimaryOrUniqueConstraint(
+          StringBuilder query,
+          String constraintType,
+          List<String> columnNames,
+          String name,
+          ConflictResolutionType resolutionType) {
+    query.append(",\"\n + \"");
     if (name.length() > 0) {
       query.append(' ').append("CONSTRAINT ").append(name);
     }
-    query.append(' ').append("UNIQUE ( ");
-    int size = uniqueConstraint.columns().length;
+    query.append(' ').append(constraintType).append(" ( ");
+    int size = columnNames.size();
     for (int i = 0; i < size; i++) {
       if (i != 0)  query.append(", ");
-      query.append(uniqueConstraint.columns()[i]);
+      query.append(columnNames.get(i));
     }
     query.append(" )");
-    writeOnConflict(query,uniqueConstraint.onConflict());
+    writeOnConflict(query,resolutionType);
   }
 
-  private void writeCheckConstraint(StringBuilder query, Check check) {
-    query.append(" ").append("CHECK ( ").append(check.value()).append(" )");
+  private static void writeUniqueConstraint(StringBuilder query, UniqueConstraint uniqueConstraint) {
+    writePrimaryOrUniqueConstraint(query,"UNIQUE", Arrays.asList(uniqueConstraint.columns()),
+            uniqueConstraint.name(), uniqueConstraint.onConflict());
+  }
+
+  private static void writePrimaryKey(
+          StringBuilder query,
+          List<String> columnNames,
+          String constraintName,
+          ConflictResolutionType resolutionType) {
+    writePrimaryOrUniqueConstraint(query,
+            "PRIMARY KEY", columnNames, constraintName, resolutionType);
+  }
+
+  private static void writeCheckConstraint(StringBuilder query, Check check) {
+    String name = check.name();
+    if (name.length() > 0) {
+      query.append(' ').append("CONSTRAINT ").append(name);
+    }
+
+    query.append(' ').append("CHECK ( ").append(check.value()).append(" )");
   }
 
   private static void writeOnConflict(StringBuilder query,
