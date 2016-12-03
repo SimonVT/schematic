@@ -54,4 +54,4 @@ android.libraryVariants.all { variant ->
   project.tasks.getByName("check").dependsOn checkstyle
 }
 
-apply from: 'https://raw.github.com/SimonVT/gradle-mvn-push/0.11/gradle-mvn-push.gradle'
+apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
