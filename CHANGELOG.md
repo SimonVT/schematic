@@ -1,9 +1,20 @@
 Change Log
 ==========
 
+Version 0.7.0
+-------------
+ - Breaking change: Multiple `@PrimaryKey` annotations on same table is no longer allowed.
+ Instead use `@PrimaryKeyConstraint`.
+ - Added annotations for table constraints
+   - `@Constraints`
+   - `@ForeignKeyConstraint`
+   - `@PrimaryKeyConstraints`
+   - `@UniqueConstraint`
+
+
 Version 0.6.8
 -------------
- - Support passing a `Context` to methods annoated with `@Where`.
+ - Support passing a `Context` to methods annotated with `@Where`.
 
 
 Version 0.6.7
