@@ -235,8 +235,9 @@ public class TableWriter {
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
       if (autoIncrement != null) {
         if (tableLevelPrimaryKey != null) {
-          throw new IllegalArgumentException(
-              "AutoIncrement is not allowed when multiple primary keys are defined");
+          error(String.format(
+              "AutoIncrement is not allowed when multiple primary keys are defined. "
+                  + "Found in %s", tableClassName));
         }
 
         query.append(" ").append("AUTOINCREMENT");

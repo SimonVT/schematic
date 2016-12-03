@@ -721,8 +721,7 @@ public class ContentProviderWriter {
             } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
-              throw new IllegalArgumentException(
-                  "@Where does not support parameter " + paramType.toString());
+              error(String.format("@Where does not support parameter %s", paramType.toString()));
             }
           }
 
@@ -758,8 +757,7 @@ public class ContentProviderWriter {
             } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
-              throw new IllegalArgumentException(
-                  "@Join does not support parameter " + paramType.toString());
+              error(String.format("@Join does not support parameter %s", paramType.toString()));
             }
           }
 
@@ -862,8 +860,8 @@ public class ContentProviderWriter {
             } else if (Clazz.CONTENT_VALUES.equals(ClassName.get(paramType))) {
               params.append("values");
             } else {
-              throw new IllegalArgumentException(
-                  "@NotifyInsert does not support parameter " + paramType.toString());
+              error(String.format("@NotifyInsert does not support parameter %s",
+                  paramType.toString()));
             }
           }
 
@@ -937,8 +935,7 @@ public class ContentProviderWriter {
             } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
-              throw new IllegalArgumentException(
-                  "@Where does not support parameter " + paramType.toString());
+              error(String.format("@Where does not support parameter %s", paramType.toString()));
             }
           }
 
@@ -985,8 +982,8 @@ public class ContentProviderWriter {
             } else if ("java.lang.String[]".equals(variableElement.asType().toString())) {
               params.append("builder.getSelectionArgs()");
             } else {
-              throw new IllegalArgumentException(
-                  "@NotifyUpdate does not support parameter " + paramType.toString());
+              error(String.format("@NotifyUpdate does not support parameter %s",
+                  paramType.toString()));
             }
           }
 
@@ -1068,8 +1065,7 @@ public class ContentProviderWriter {
             } else if (Clazz.URI.equals(ClassName.get(paramType))) {
               params.append("uri");
             } else {
-              throw new IllegalArgumentException(
-                  "@Where does not support parameter " + paramType.toString());
+              error(String.format("@Where does not support parameter %s", paramType.toString()));
             }
           }
 
@@ -1114,8 +1110,8 @@ public class ContentProviderWriter {
             } else if (ArrayTypeName.get(String.class).equals(ArrayTypeName.get(paramType))) {
               params.append("builder.getSelectionArgs()");
             } else {
-              throw new IllegalArgumentException(
-                  "@NotifyDelete does not support parameter " + paramType.toString());
+              error(String.format("@NotifyDelete does not support parameter %s",
+                  paramType.toString()));
             }
           }
 
@@ -1179,8 +1175,8 @@ public class ContentProviderWriter {
       } else if (ArrayTypeName.get(String.class).equals(ArrayTypeName.get(paramType))) {
         params.append("whereArgs");
       } else {
-        throw new IllegalArgumentException(
-            "@NotifyInsert does not support parameter " + paramType.toString());
+        error(String.format("@NotifyInsert does not support parameter %s",
+            paramType.toString()));
       }
     }
 
@@ -1223,8 +1219,8 @@ public class ContentProviderWriter {
       } else if (ArrayTypeName.of(ArrayTypeName.LONG).equals(ArrayTypeName.get(paramType))) {
         params.append("ids");
       } else {
-        throw new IllegalArgumentException(
-            "@NotifyBulkInsert does not support parameter " + paramType.toString());
+        error(String.format("@NotifyBulkInsert does not support parameter %s",
+            paramType.toString()));
       }
     }
 
