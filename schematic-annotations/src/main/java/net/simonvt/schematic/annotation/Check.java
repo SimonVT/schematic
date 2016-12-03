@@ -11,6 +11,7 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
  * Add CHECK constraint. Can be used on column level or on table level.
  * <pre>
  * <code>
+ *
  * &#64;Check(NotesColumns.STATUS + " = '" + NotesColumns.STATUS_COMPLETED + "' and " + NotesColumns.COMPLETION_DATE + " is not null")
  * public interface NotesColumns{
  *   String STATUS_NEW = "new";
@@ -28,4 +29,7 @@ public @interface Check {
      * CHECK constraint text. Shouldn't contain double quotes. Use single quote instead.
      */
     String value();
+
+    /** optional name for constraint*/
+    String name() default "";
 }

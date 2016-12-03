@@ -38,8 +38,7 @@ public interface NoteColumns {
   @DataType(TEXT) String NOTE = "note";
 
   @DataType(TEXT)
-  @Check(NoteColumns.STATUS + " in ('" + NoteColumns.STATUS_NEW + "', '"
-          + NoteColumns.STATUS_COMPLETED + "')")
+  @Check(NoteColumns.STATUS + " in ('" + STATUS_NEW + "', '" + STATUS_COMPLETED + "')")
   String STATUS = "status";
 
 }
