@@ -17,7 +17,6 @@
 package net.simonvt.schematic.compiler;
 
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Strings;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -67,14 +66,15 @@ public class TableWriter {
   private List<ForeignKeyConstraint> foreignKeyConstraints = new ArrayList<>();
   private PrimaryKeyConstraint tableLevelPrimaryKey;
 
+  private PrimaryKey primaryKey;
+
   VariableElement table;
 
   TypeElement columnsClass;
 
   List<VariableElement> columns = new ArrayList<>();
-  List<String> primaryKeys = new ArrayList<>();
 
-  public TableWriter(ProcessingEnvironment env, VariableElement table) {
+  public TableWriter(ProcessingEnvironment env, VariableElement table, ClassName tableClassName) {
     this.processingEnv = env;
     this.table = table;
     this.name = table.getConstantValue().toString();
@@ -93,11 +93,11 @@ public class TableWriter {
 
     List<? extends TypeMirror> interfaces = columnsClass.getInterfaces();
 
-    findColumns(columnsClass.getEnclosedElements());
+    findColumns(tableClassName, columnsClass.getEnclosedElements());
 
     for (TypeMirror mirror : interfaces) {
       TypeElement parent = (TypeElement) env.getTypeUtils().asElement(mirror);
-      findColumns(parent.getEnclosedElements());
+      findColumns(tableClassName, parent.getEnclosedElements());
     }
   }
 
@@ -135,7 +135,7 @@ public class TableWriter {
     tableLevelPrimaryKey = columnsClass.getAnnotation(PrimaryKeyConstraint.class);
   }
 
-  private void findColumns(List<? extends Element> elements) {
+  private void findColumns(ClassName tableClassName, List<? extends Element> elements) {
     for (Element element : elements) {
       if (!(element instanceof VariableElement)) {
         continue;
@@ -152,7 +152,19 @@ public class TableWriter {
 
       PrimaryKey primaryKey = variableElement.getAnnotation(PrimaryKey.class);
       if (primaryKey != null) {
-        primaryKeys.add(columnName);
+        if (this.primaryKey != null) {
+          error(String.format("Only one primary key can be defined for table. " +
+              "Use PrimaryKey or PrimaryKeyConstraint. Not both. " +
+              "Found in %s", tableClassName));
+        }
+        if (tableLevelPrimaryKey != null) {
+          error(String.format(
+              "Only one primary key can be defined for table. " +
+                  "Use PrimaryKey or PrimaryKeyConstraint. Not both. " +
+                  "Found in %s", tableClassName));
+        }
+
+        this.primaryKey = primaryKey;
       }
 
       this.columns.add(variableElement);
@@ -168,8 +180,6 @@ public class TableWriter {
       query.append("IF NOT EXISTS ");
     }
     query.append(name).append(" (");
-
-    final int primaryKeyCount = primaryKeys.size();
 
     boolean first = true;
     for (VariableElement element : columns) {
@@ -203,7 +213,7 @@ public class TableWriter {
       }
 
       PrimaryKey primary = element.getAnnotation(PrimaryKey.class);
-      if (primary != null && primaryKeyCount == 1) {
+      if (primary != null) {
         query.append(" ").append("PRIMARY KEY");
         writeOnConflict(query, primary.onConflict());
       }
@@ -221,7 +231,7 @@ public class TableWriter {
 
       AutoIncrement autoIncrement = element.getAnnotation(AutoIncrement.class);
       if (autoIncrement != null) {
-        if (primaryKeyCount > 1) {
+        if (tableLevelPrimaryKey != null) {
           throw new IllegalArgumentException(
               "AutoIncrement is not allowed when multiple primary keys are defined");
         }
@@ -238,21 +248,6 @@ public class TableWriter {
             .append(references.column())
             .append(")");
       }
-    }
-
-    if (primaryKeyCount > 0 && tableLevelPrimaryKey != null) {
-      error(String.format(
-              "Only one primary key can be defined for table. " +
-                      "Use PrimaryKey or PrimaryKeyConstraint. Not both. " +
-              "Found in %s", tableClassName));
-    }
-
-    if (primaryKeyCount > 1) {
-      processingEnv.getMessager().printMessage(Kind.WARNING,
-              String.format("DEPRECATION. Define multi column primary key with " +
-                      "PrimaryKeyConstrain annotation instead of PrimaryKey. Found in %s",
-                      tableClassName));
-      writePrimaryKey(query, primaryKeys, "", ConflictResolutionType.NONE);
     }
 
     if (tableLevelPrimaryKey != null) {
