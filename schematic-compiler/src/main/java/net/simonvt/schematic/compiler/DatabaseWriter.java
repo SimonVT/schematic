@@ -176,7 +176,7 @@ public class DatabaseWriter {
       ClassName tableClassName = ClassName.get(tableClass);
 
       TableWriter tableWriter = new TableWriter(processingEnv, table, tableClassName);
-      tableWriter.createTable(databaseBuilder, tableClassName);
+      tableWriter.createTable(databaseBuilder);
       tableWriter.createValuesBuilder(filer, outPackage);
     }
 

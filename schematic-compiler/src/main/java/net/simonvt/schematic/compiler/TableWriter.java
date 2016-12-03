@@ -69,6 +69,7 @@ public class TableWriter {
   private PrimaryKey primaryKey;
 
   VariableElement table;
+  ClassName tableClassName;
 
   TypeElement columnsClass;
 
@@ -78,6 +79,8 @@ public class TableWriter {
     this.processingEnv = env;
     this.table = table;
     this.name = table.getConstantValue().toString();
+    this.tableClassName = tableClassName;
+
     Table columns = table.getAnnotation(Table.class);
     try {
       columns.value();
@@ -93,11 +96,11 @@ public class TableWriter {
 
     List<? extends TypeMirror> interfaces = columnsClass.getInterfaces();
 
-    findColumns(tableClassName, columnsClass.getEnclosedElements());
+    findColumns(columnsClass.getEnclosedElements());
 
     for (TypeMirror mirror : interfaces) {
       TypeElement parent = (TypeElement) env.getTypeUtils().asElement(mirror);
-      findColumns(tableClassName, parent.getEnclosedElements());
+      findColumns(parent.getEnclosedElements());
     }
   }
 
@@ -135,7 +138,7 @@ public class TableWriter {
     tableLevelPrimaryKey = columnsClass.getAnnotation(PrimaryKeyConstraint.class);
   }
 
-  private void findColumns(ClassName tableClassName, List<? extends Element> elements) {
+  private void findColumns(List<? extends Element> elements) {
     for (Element element : elements) {
       if (!(element instanceof VariableElement)) {
         continue;
@@ -171,7 +174,7 @@ public class TableWriter {
     }
   }
 
-  public void createTable(TypeSpec.Builder databaseBuilder, ClassName tableClassName)
+  public void createTable(TypeSpec.Builder databaseBuilder)
       throws IOException {
     List<ClassName> classes = new ArrayList<>();
 
