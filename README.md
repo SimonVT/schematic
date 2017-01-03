@@ -93,26 +93,9 @@ public static Uri withId(long id) {
 Including in your project
 =========================
 
-I recommend using the android-apt plugin. It doesn't include the compiler artifact in the final apk,
-and also sets the source paths so AS picks it up the generated classes.
-
 ```groovy
-apply plugin: 'com.android.application'
-apply plugin: 'com.neenbedankt.android-apt'
-
-buildscript {
-  repositories {
-    mavenCentral()
-  }
-
-  dependencies {
-    classpath 'com.android.tools.build:gradle:{latest-version}'
-    classpath 'com.neenbedankt.gradle.plugins:android-apt:{latest-version}'
-  }
-}
-
 dependencies {
-  apt 'net.simonvt.schematic:schematic-compiler:{latest-version}'
+  annotationProcessor 'net.simonvt.schematic:schematic-compiler:{latest-version}'
   compile 'net.simonvt.schematic:schematic:{latest-version}'
 }
 ```
