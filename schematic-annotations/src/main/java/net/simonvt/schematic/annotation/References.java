@@ -32,6 +32,6 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 @Retention(CLASS) @Target(FIELD)
 public @interface References {
   String table();
-
   String column();
+	boolean onDeleteCascade() default false;
 }
