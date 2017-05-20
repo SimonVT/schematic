@@ -123,7 +123,7 @@ public class ContentProviderWriter {
   String providerName;
 
   Element database;
-  String databaseName;
+  ClassName databaseClass;
 
   ExecutableElement defaultNotifyInsert;
   ExecutableElement defaultNotifyBulkInsert;
@@ -172,11 +172,22 @@ public class ContentProviderWriter {
       TypeMirror mirror = e.getTypeMirror();
       this.database = processingEnv.getTypeUtils().asElement(mirror);
       String databaseSchematicName = this.database.getSimpleName().toString();
+      String databaseSchematicPackage = this.database.getEnclosingElement().getSimpleName().toString();
       Database database = this.database.getAnnotation(Database.class);
-      databaseName = database.className();
-      if (databaseName.trim().isEmpty()) {
-        this.databaseName = databaseSchematicName;
+      String databaseName = database.className();
+      String databasePackage = database.packageName();
+
+      String resultingPackage = databaseSchematicPackage;
+      String resultingName = databaseSchematicName;
+
+      if (!databasePackage.trim().isEmpty()) {
+        resultingPackage = databasePackage;
       }
+      if (!databaseName.trim().isEmpty()) {
+        resultingName = databaseName;
+      }
+
+      databaseClass = ClassName.get(resultingPackage, resultingName);
     }
 
     List<? extends Element> enclosedElements = provider.getEnclosedElements();
@@ -519,7 +530,7 @@ public class ContentProviderWriter {
         .returns(boolean.class)
         .addModifiers(Modifier.PUBLIC)
         .addAnnotation(Override.class)
-        .addStatement("database = $L.getInstance(getContext())", databaseName)
+        .addStatement("database = $T.getInstance(getContext())", databaseClass)
         .addStatement("return true")
         .build();
   }
