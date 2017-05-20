@@ -3,7 +3,7 @@ apply plugin: 'checkstyle'
 
 buildscript {
   repositories {
-    mavenCentral()
+    jcenter()
   }
 
   dependencies {

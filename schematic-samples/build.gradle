@@ -4,7 +4,10 @@ apply plugin: 'com.neenbedankt.android-apt'
 
 buildscript {
   repositories {
-    mavenCentral()
+    maven {
+      url "https://maven.google.com"
+    }
+    jcenter()
   }
 
   dependencies {
