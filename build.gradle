@@ -30,5 +30,7 @@ ext.libraries = [
   butterknife: 'com.jakewharton:butterknife:8.4.0',
   butterknifeCompiler: 'com.jakewharton:butterknife-compiler:8.4.0',
 
-  guava: 'com.google.guava:guava:19.0'
+  guava: 'com.google.guava:guava:19.0',
+
+  jsr305: 'com.google.code.findbugs:jsr305:3.0.2'
 ]

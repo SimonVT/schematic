@@ -17,17 +17,18 @@
 package net.simonvt.schematic;
 
 import android.database.Cursor;
+import javax.annotation.Nullable;
 
 public final class Cursors {
 
   private Cursors() {
   }
 
-  public static String getString(Cursor cursor, String column) {
+  public static @Nullable String getString(Cursor cursor, String column) {
     return cursor.getString(cursor.getColumnIndexOrThrow(column));
   }
 
-  public static String getStringOrNull(Cursor cursor, String column) {
+  public static @Nullable String getStringOrNull(Cursor cursor, String column) {
     int index = cursor.getColumnIndexOrThrow(column);
     if (cursor.isNull(index)) {
       return null;
@@ -40,7 +41,7 @@ public final class Cursors {
     return cursor.getInt(cursor.getColumnIndexOrThrow(column));
   }
 
-  public static Integer getIntOrNull(Cursor cursor, String column) {
+  public static @Nullable Integer getIntOrNull(Cursor cursor, String column) {
     int index = cursor.getColumnIndexOrThrow(column);
     if (cursor.isNull(index)) {
       return null;
@@ -53,7 +54,7 @@ public final class Cursors {
     return cursor.getLong(cursor.getColumnIndexOrThrow(column));
   }
 
-  public static Long getLongOrNull(Cursor cursor, String column) {
+  public static @Nullable Long getLongOrNull(Cursor cursor, String column) {
     int index = cursor.getColumnIndexOrThrow(column);
     if (cursor.isNull(index)) {
       return null;
@@ -66,7 +67,7 @@ public final class Cursors {
     return cursor.getFloat(cursor.getColumnIndexOrThrow(column));
   }
 
-  public static Float getFloatOrNull(Cursor cursor, String column) {
+  public static @Nullable Float getFloatOrNull(Cursor cursor, String column) {
     int index = cursor.getColumnIndexOrThrow(column);
     if (cursor.isNull(index)) {
       return null;
@@ -79,7 +80,7 @@ public final class Cursors {
     return cursor.getDouble(cursor.getColumnIndexOrThrow(column));
   }
 
-  public static Double getDoubleOrNull(Cursor cursor, String column) {
+  public static @Nullable Double getDoubleOrNull(Cursor cursor, String column) {
     int index = cursor.getColumnIndexOrThrow(column);
     if (cursor.isNull(index)) {
       return null;

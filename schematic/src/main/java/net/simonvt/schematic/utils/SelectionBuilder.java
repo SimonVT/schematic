@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Helper for building selection clauses for {@link SQLiteDatabase}. Each
@@ -59,7 +60,7 @@ public class SelectionBuilder {
    * Append the given selection clause to the internal state. Each clause is
    * surrounded with parenthesis and combined using {@code AND}.
    */
-  public SelectionBuilder where(String selection, String... selectionArgs) {
+  public SelectionBuilder where(String selection, @Nullable String... selectionArgs) {
     if (TextUtils.isEmpty(selection)) {
       if (selectionArgs != null && selectionArgs.length > 0) {
         throw new IllegalArgumentException("Valid selection required when including arguments=");
@@ -147,8 +148,8 @@ public class SelectionBuilder {
   }
 
   /** Execute query using the current internal state as {@code WHERE} clause. */
-  public Cursor query(SQLiteDatabase db, String[] columns, String groupBy, String having,
-      String orderBy, String limit) {
+  public Cursor query(SQLiteDatabase db, @Nullable String[] columns, @Nullable String groupBy,
+      @Nullable String having, @Nullable String orderBy, @Nullable String limit) {
     assertTable();
     if (columns != null) mapColumns(columns);
     if (LOGV) Log.v(TAG, "query(columns=" + Arrays.toString(columns) + ") " + this);
