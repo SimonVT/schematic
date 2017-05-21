@@ -57,7 +57,7 @@ public class ListsAdapter extends CursorAdapter {
     @BindView(R.id.title) TextView title;
     @BindView(R.id.notes) TextView notes;
 
-    public ViewHolder(View view) {
+    ViewHolder(View view) {
       ButterKnife.bind(this, view);
     }
   }
