@@ -24,12 +24,11 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * Annotate a method that returns an Uri to be returned when performing an insert.
- * <pre>{@code
+ * <pre><code>
  * &#064;InsertUri(paths = "lists)
  * public static Uri insertReturnUri(Uri uri, ContentValues cv) {
  *   ...
- * }
- * }</pre>
+ * }</code></pre>
  */
 @Retention(CLASS) @Target(METHOD)
 public @interface InsertUri {

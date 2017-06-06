@@ -24,10 +24,10 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * Adds the REFERENCES clause to a database column.
- * <pre>{@code
+ * <pre><code>
  * &#064;DataType(INTEGER) &#064;References(table = NotesDatabase.LISTS, column = ListColumns._ID)
  * String LIST_ID = "listId";
- * }</pre>
+ * </code></pre>
  */
 @Retention(CLASS) @Target(FIELD)
 public @interface References {

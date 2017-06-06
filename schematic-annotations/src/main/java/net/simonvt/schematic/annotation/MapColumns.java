@@ -24,13 +24,12 @@ import static java.lang.annotation.RetentionPolicy.CLASS;
 
 /**
  * Maps a column or subquery to another column.
- * <pre>{@code
+ * <pre><code>
  * &#064;MapColumns public static Map<String, String> mapColumns() {
  *   Map<String, String> map = new HashMap<String, String>();
  *   map.put(from, to);
  *   return map;
- * }
- * }</pre>
+ * }</code></pre>
  *
  * This is then inserted into the columns in the select statement:
  *
