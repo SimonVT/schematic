@@ -40,6 +40,10 @@ public final class NotesProvider {
 
   public static final String AUTHORITY = "net.simonvt.schematic.sample.NotesProvider";
 
+  interface Path {
+      String LISTS = "lists";
+  }
+
   @TableEndpoint(table = NotesDatabase.LISTS) public static class Lists {
 
     @ContentUri(
