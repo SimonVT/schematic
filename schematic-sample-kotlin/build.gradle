@@ -1,4 +1,7 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'checkstyle'
 
 buildscript {
@@ -8,16 +11,16 @@ buildscript {
   }
 
   dependencies {
+    classpath parent.libraries.kotlinPlugin
     classpath parent.libraries.androidGradle
   }
 }
 
 dependencies {
-  annotationProcessor project(':schematic-compiler')
+  compile parent.libraries.kotlinRuntime
+  kapt project(':schematic-compiler')
   compile project(':schematic')
   compile parent.libraries.supportv4
-  compile parent.libraries.butterknife
-  compile parent.libraries.butterknifeCompiler
 }
 
 android {
@@ -35,6 +38,11 @@ android {
 
     versionCode = parent.ext.versionCode;
     versionName = parent.ext.versionName
+
+    buildConfigField "String", "PROVIDER_AUTHORITY",
+        "\"net.simonvt.schematic.sample.kotlin.provider.NotesProvider\""
+    resValue "string", "authority_provider",
+        "net.simonvt.schematic.sample.kotlin.provider.NotesProvider"
   }
 
   lintOptions {
@@ -65,6 +73,5 @@ android.applicationVariants.all { variant ->
 
 // Workaround because compiler and sample is in the same gradle project.
 // DO NOT USE WHEN PULLING FROM MAVEN REPO
-android.applicationVariants.all { variant ->
-  variant.javaCompile.dependsOn ':schematic-compiler:jar'
+android.applicationVariants.all { variant -> variant.javaCompile.dependsOn ':schematic-compiler:jar'
 }

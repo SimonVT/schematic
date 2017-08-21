@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="net.simonvt.schematic.sample">
+    package="net.simonvt.schematic.sample.kotlin">
 
   <application
       android:theme="@android:style/Theme.Holo.Light.DarkActionBar">
@@ -15,7 +15,7 @@
     </activity>
 
     <provider
-        android:authorities="net.simonvt.schematic.sample.NotesProvider"
+        android:authorities="@string/authority_provider"
         android:name="net.simonvt.schematic.sample.provider.NotesProvider"
         android:exported="false"/>
   </application>

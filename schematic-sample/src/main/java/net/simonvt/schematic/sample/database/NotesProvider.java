@@ -31,17 +31,20 @@ import net.simonvt.schematic.annotation.NotifyDelete;
 import net.simonvt.schematic.annotation.NotifyInsert;
 import net.simonvt.schematic.annotation.NotifyUpdate;
 import net.simonvt.schematic.annotation.TableEndpoint;
+import net.simonvt.schematic.sample.BuildConfig;
 import net.simonvt.schematic.sample.database.NotesDatabase.Tables;
 
-@ContentProvider(authority = NotesProvider.AUTHORITY,
+@ContentProvider(
+    authority = NotesProvider.AUTHORITY,
     database = NotesDatabase.class,
-    packageName = "net.simonvt.schematic.sample.provider")
+    packageName = "net.simonvt.schematic.sample.provider"
+)
 public final class NotesProvider {
 
   private NotesProvider() {
   }
 
-  public static final String AUTHORITY = "net.simonvt.schematic.sample.NotesProvider";
+  public static final String AUTHORITY = BuildConfig.PROVIDER_AUTHORITY;
 
   static final Uri BASE_CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
