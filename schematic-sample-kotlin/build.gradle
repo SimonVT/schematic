@@ -20,7 +20,8 @@ dependencies {
   compile parent.libraries.kotlinRuntime
   kapt project(':schematic-compiler')
   compile project(':schematic')
-  compile parent.libraries.supportv4
+  compile parent.libraries.appcompat
+  compile parent.libraries.recyclerview
 }
 
 android {

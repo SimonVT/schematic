@@ -17,12 +17,13 @@
 package net.simonvt.schematic.sample.ui
 
 import android.os.Bundle
-import android.support.v4.app.FragmentActivity
+import android.support.v7.app.AppCompatActivity
 import net.simonvt.schematic.sample.ui.fragment.ListFragment
 import net.simonvt.schematic.sample.ui.fragment.ListsFragment
 import net.simonvt.schematic.sample.ui.fragment.NoteFragment
 
-class SampleActivity : FragmentActivity(), ListsFragment.OnListSelectedListener, ListFragment.OnNoteSelectedListener, NoteFragment.NoteListener {
+class SampleActivity : AppCompatActivity(), ListsFragment.OnListSelectedListener,
+    ListFragment.OnNoteSelectedListener, NoteFragment.NoteListener {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

@@ -23,14 +23,14 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.LoaderManager
 import android.support.v4.content.CursorLoader
 import android.support.v4.content.Loader
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_list.*
-import net.simonvt.schematic.sample.database.NoteColumns
+import kotlinx.android.synthetic.main.toolbar.*
 import net.simonvt.schematic.sample.database.NotesProvider.Lists
 import net.simonvt.schematic.sample.database.NotesProvider.Notes
 import net.simonvt.schematic.sample.kotlin.R
@@ -51,7 +51,7 @@ class ListFragment : Fragment(), LoaderManager.LoaderCallbacks<Cursor> {
 
   lateinit var listener: OnNoteSelectedListener
 
-  private var adapter: ListAdapter? = null
+  lateinit var adapter: ListAdapter
 
   override fun onAttach(activity: Activity?) {
     super.onAttach(activity)
@@ -62,37 +62,66 @@ class ListFragment : Fragment(), LoaderManager.LoaderCallbacks<Cursor> {
     super.onCreate(savedInstanceState)
     val args = arguments
     listId = args.getLong(ARG_ID)
-    setHasOptionsMenu(true)
+    adapter = ListAdapter(listId, listener)
+    adapter.registerAdapterDataObserver(adapterObserver)
   }
 
-  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+      savedInstanceState: Bundle?): View? {
     return inflater.inflate(R.layout.fragment_list, container, false)
   }
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
     super.onViewCreated(view, savedInstanceState)
-    list.emptyView = empty
-    if (adapter != null) {
-      list.adapter = adapter
-    }
+    list.adapter = adapter
+    list.layoutManager = LinearLayoutManager(context)
+    showEmptyView(adapter.itemCount == 0)
 
     addNote.setOnClickListener { listener.onAddNote(listId) }
-    list.setOnItemClickListener { _, _, position, id ->
-      val c = adapter!!.getItem(position) as Cursor
-      val note = c.getString(c.getColumnIndex(NoteColumns.NOTE))
-      val status = c.getString(c.getColumnIndex(NoteColumns.STATUS))
-      listener.onNoteSelected(listId, id, note, status)
-    }
+
+    toolbar.setTitle(R.string.app_name)
+    toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24dp)
+    toolbar.setNavigationOnClickListener { activity.onBackPressed() }
+    toolbar.inflateMenu(R.menu.menu_remove)
+    toolbar.setOnMenuItemClickListener { item -> onMenuItemSelected(item) }
 
     loaderManager.initLoader(LOADER_NOTES, null, this)
   }
 
-  override fun onCreateOptionsMenu(menu: Menu?, inflater: MenuInflater?) {
-    inflater!!.inflate(R.menu.menu_remove, menu)
+  private fun showEmptyView(show: Boolean) {
+    if (show) {
+      empty?.visibility = View.VISIBLE
+      list?.visibility = View.GONE
+    } else {
+      empty?.visibility = View.GONE
+      list?.visibility = View.VISIBLE
+    }
   }
 
-  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-    when (item!!.itemId) {
+  private val adapterObserver = object : RecyclerView.AdapterDataObserver() {
+    override fun onChanged() {
+      val adapterItemCount = adapter.itemCount
+      showEmptyView(adapterItemCount == 0)
+    }
+
+    override fun onItemRangeChanged(positionStart: Int, itemCount: Int) {
+      val adapterItemCount = adapter.itemCount
+      showEmptyView(adapterItemCount == 0)
+    }
+
+    override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+      val adapterItemCount = adapter.itemCount
+      showEmptyView(adapterItemCount == 0)
+    }
+
+    override fun onItemRangeRemoved(positionStart: Int, itemCount: Int) {
+      val adapterItemCount = adapter.itemCount
+      showEmptyView(adapterItemCount == 0)
+    }
+  }
+
+  private fun onMenuItemSelected(item: MenuItem): Boolean {
+    when (item.itemId) {
       R.id.remove -> {
         val appContext = activity.applicationContext
         val id = listId
@@ -100,12 +129,11 @@ class ListFragment : Fragment(), LoaderManager.LoaderCallbacks<Cursor> {
           appContext.contentResolver.delete(Notes.fromList(id), null, null)
           appContext.contentResolver.delete(Lists.withId(id), null, null)
         }).start()
-        listener!!.onListRemoved()
+        listener.onListRemoved()
         return true
       }
+      else -> return false
     }
-
-    return super.onOptionsItemSelected(item)
   }
 
   override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
@@ -113,16 +141,11 @@ class ListFragment : Fragment(), LoaderManager.LoaderCallbacks<Cursor> {
   }
 
   override fun onLoadFinished(loader: Loader<Cursor>, data: Cursor) {
-    if (adapter == null) {
-      adapter = ListAdapter(activity, data)
-      list?.adapter = adapter
-    } else {
-      adapter?.changeCursor(data)
-    }
+    adapter.cursor = data
   }
 
   override fun onLoaderReset(loader: Loader<Cursor>) {
-    adapter?.changeCursor(null)
+    adapter.cursor = null
   }
 
   companion object {

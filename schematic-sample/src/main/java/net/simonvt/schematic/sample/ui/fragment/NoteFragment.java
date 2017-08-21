@@ -26,9 +26,8 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +38,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
-
 import net.simonvt.schematic.Cursors;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NoteColumns;
@@ -93,9 +91,10 @@ public class NoteFragment extends Fragment {
 
   Unbinder unbinder;
 
+  @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.action) View actionView;
   @BindView(R.id.actionText) TextView actionText;
-  @BindView(R.id.note) EditText noteView;
+  @BindView(R.id.noteInput) EditText noteView;
   @BindView(R.id.statusSwitch) Switch statusView;
   @BindView(R.id.tags) EditText tags;
 
@@ -111,8 +110,6 @@ public class NoteFragment extends Fragment {
     noteId = args.getLong(ARG_ID);
     note = args.getString(ARG_NOTE);
     status = args.getString(ARG_STATUS);
-
-    setHasOptionsMenu(true);
   }
 
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -124,13 +121,12 @@ public class NoteFragment extends Fragment {
     super.onViewCreated(view, savedInstanceState);
     unbinder = ButterKnife.bind(this, view);
     LoaderManager.LoaderCallbacks<Cursor> callBack = new LoaderManager.LoaderCallbacks<Cursor>() {
-      @Override
-      public Loader<Cursor> onCreateLoader(int id, Bundle args) {
-        return new CursorLoader(getActivity(), NotesProvider.NotesTags.fromNote(noteId), null, null, null, null);
+      @Override public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(getActivity(), NotesProvider.NotesTags.fromNote(noteId), null, null,
+            null, null);
       }
 
-      @Override
-      public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+      @Override public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         data.moveToPosition(-1);
         StringBuffer buffer = new StringBuffer();
         while (data.moveToNext()) {
@@ -142,8 +138,7 @@ public class NoteFragment extends Fragment {
         tags.setText(buffer.toString());
       }
 
-      @Override
-      public void onLoaderReset(Loader<Cursor> loader) {
+      @Override public void onLoaderReset(Loader<Cursor> loader) {
 
       }
     };
@@ -156,6 +151,20 @@ public class NoteFragment extends Fragment {
       statusView.setChecked(false);
       actionText.setText(R.string.insert);
     }
+
+    toolbar.setTitle(R.string.app_name);
+    toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24dp);
+    toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+      @Override public void onClick(View view) {
+        getActivity().onBackPressed();
+      }
+    });
+    toolbar.inflateMenu(R.menu.menu_remove);
+    toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+      @Override public boolean onMenuItemClick(MenuItem item) {
+        return onMenuItemSelected(item);
+      }
+    });
   }
 
   @Override public void onDestroyView() {
@@ -166,11 +175,7 @@ public class NoteFragment extends Fragment {
     super.onDestroyView();
   }
 
-  @Override public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-    inflater.inflate(R.menu.menu_remove, menu);
-  }
-
-  @Override public boolean onOptionsItemSelected(MenuItem item) {
+  public boolean onMenuItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case R.id.remove:
         final Context appContext = getActivity().getApplicationContext();
@@ -205,7 +210,7 @@ public class NoteFragment extends Fragment {
           cv.put(NoteColumns.NOTE, note);
           cv.put(NoteColumns.STATUS, status);
           Uri newUri = appContext.getContentResolver().insert(Notes.CONTENT_URI, cv);
-          long newId =  Long.parseLong(newUri.getLastPathSegment());
+          long newId = Long.parseLong(newUri.getLastPathSegment());
           insertTags(newId, tagList, appContext);
         }
       }).start();
@@ -217,7 +222,8 @@ public class NoteFragment extends Fragment {
           cv.put(NoteColumns.NOTE, note);
           cv.put(NoteColumns.STATUS, status);
           appContext.getContentResolver().update(Notes.withId(noteId), cv, null, null);
-          appContext.getContentResolver().delete(NotesProvider.NotesTags.fromNote(noteId), null, null);
+          appContext.getContentResolver()
+              .delete(NotesProvider.NotesTags.fromNote(noteId), null, null);
           insertTags(id, tagList, appContext);
         }
       }).start();
@@ -230,12 +236,8 @@ public class NoteFragment extends Fragment {
     String[] tagNames = tagList.split(",");
     ContentValues[] tagValues = new ContentValues[tagNames.length];
     for (int i = 0; i < tagNames.length; i++) {
-      tagValues[i] = new Notes_tagsValuesBuilder()
-          .noteId(newId)
-          .name(tagNames[i])
-          .values();
+      tagValues[i] = new Notes_tagsValuesBuilder().noteId(newId).name(tagNames[i]).values();
     }
-    appContext.getContentResolver()
-        .bulkInsert(NotesProvider.NotesTags.fromNote(newId), tagValues);
+    appContext.getContentResolver().bulkInsert(NotesProvider.NotesTags.fromNote(newId), tagValues);
   }
 }

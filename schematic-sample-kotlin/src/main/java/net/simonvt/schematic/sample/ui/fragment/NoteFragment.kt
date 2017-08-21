@@ -26,12 +26,11 @@ import android.support.v4.app.LoaderManager
 import android.support.v4.content.CursorLoader
 import android.support.v4.content.Loader
 import android.view.LayoutInflater
-import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_note.*
+import kotlinx.android.synthetic.main.toolbar.*
 import net.simonvt.schematic.Cursors
 import net.simonvt.schematic.sample.database.NoteColumns
 import net.simonvt.schematic.sample.database.NotesProvider
@@ -68,11 +67,10 @@ class NoteFragment : Fragment() {
     noteId = args.getLong(ARG_ID)
     note = args.getString(ARG_NOTE)
     status = args.getString(ARG_STATUS)
-
-    setHasOptionsMenu(true)
   }
 
-  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+      savedInstanceState: Bundle?): View? {
     return inflater.inflate(R.layout.fragment_note, container, false)
   }
 
@@ -88,14 +86,16 @@ class NoteFragment : Fragment() {
       statusSwitch.isChecked = false
       actionText.setText(R.string.insert)
     }
+
+    toolbar.setTitle(R.string.app_name)
+    toolbar.setNavigationIcon(R.drawable.ic_arrow_back_24dp)
+    toolbar.setNavigationOnClickListener { activity.onBackPressed() }
+    toolbar.inflateMenu(R.menu.menu_remove)
+    toolbar.setOnMenuItemClickListener { item -> onMenuItemSelected(item) }
   }
 
-  override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-    inflater.inflate(R.menu.menu_remove, menu)
-  }
-
-  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
-    when (item!!.itemId) {
+  private fun onMenuItemSelected(item: MenuItem): Boolean {
+    when (item.itemId) {
       R.id.remove -> {
         val appContext = activity.applicationContext
         val id = noteId
@@ -103,9 +103,8 @@ class NoteFragment : Fragment() {
         listener.onNoteRemoved()
         return true
       }
+      else -> return false
     }
-
-    return super.onOptionsItemSelected(item)
   }
 
   private fun onActionClicked() {
@@ -145,7 +144,8 @@ class NoteFragment : Fragment() {
 
   val callBack = object : LoaderManager.LoaderCallbacks<Cursor> {
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
-      return CursorLoader(activity, NotesProvider.NotesTags.fromNote(noteId), null, null, null, null)
+      return CursorLoader(activity, NotesProvider.NotesTags.fromNote(noteId), null, null, null,
+          null)
     }
 
     override fun onLoadFinished(loader: Loader<Cursor>, data: Cursor) {
@@ -174,7 +174,9 @@ class NoteFragment : Fragment() {
 
     private val NO_ID = -1L
 
-    @JvmOverloads fun newInstance(listId: Long, id: Long = NO_ID, note: String? = null, status: String? = null): NoteFragment {
+    @JvmOverloads
+    fun newInstance(listId: Long, id: Long = NO_ID, note: String? = null,
+        status: String? = null): NoteFragment {
       val f = NoteFragment()
 
       val args = Bundle()

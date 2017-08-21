@@ -19,19 +19,21 @@ package net.simonvt.schematic.sample.ui.fragment;
 import android.app.Activity;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import butterknife.OnItemClick;
 import butterknife.Unbinder;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.NotesProvider.Lists;
@@ -52,7 +54,8 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
 
   Unbinder unbinder;
 
-  @BindView(android.R.id.list) ListView listView;
+  @BindView(R.id.toolbar) Toolbar toolbar;
+  @BindView(android.R.id.list) RecyclerView list;
   @BindView(android.R.id.empty) TextView emptyView;
 
   private ListsAdapter adapter;
@@ -64,6 +67,12 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
     listener = (OnListSelectedListener) activity;
   }
 
+  @Override public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    adapter = new ListsAdapter(getContext(), listener);
+    adapter.registerAdapterDataObserver(adapterObserver);
+  }
+
   @Override public View onCreateView(LayoutInflater inflater, ViewGroup container,
       Bundle savedInstanceState) {
     return inflater.inflate(R.layout.fragment_lists, container, false);
@@ -72,10 +81,11 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   @Override public void onViewCreated(View view, Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
     unbinder = ButterKnife.bind(this, view);
-    listView.setEmptyView(emptyView);
-    if (adapter != null) {
-      listView.setAdapter(adapter);
-    }
+    list.setAdapter(adapter);
+    list.setLayoutManager(new LinearLayoutManager(getContext()));
+    showEmptyView(adapter.getItemCount() == 0);
+
+    toolbar.setTitle(R.string.app_name);
 
     getLoaderManager().initLoader(LOADER_LISTS, null, this);
   }
@@ -88,12 +98,44 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
     super.onDestroyView();
   }
 
-  @OnClick(R.id.addList) void addList() {
-    new NewListDialog().show(getFragmentManager(), DIALOG_NEW_LIST);
+  private void showEmptyView(boolean show) {
+    if (emptyView != null) {
+      if (show) {
+        emptyView.setVisibility(View.VISIBLE);
+        list.setVisibility(View.GONE);
+      } else {
+        emptyView.setVisibility(View.GONE);
+        list.setVisibility(View.VISIBLE);
+      }
+    }
   }
 
-  @OnItemClick(android.R.id.list) void onListClicked(long id) {
-    listener.onListSelected(id);
+  private RecyclerView.AdapterDataObserver adapterObserver =
+      new RecyclerView.AdapterDataObserver() {
+
+        @Override public void onChanged() {
+          int adapterItemCount = adapter.getItemCount();
+          showEmptyView(adapterItemCount == 0);
+        }
+
+        @Override public void onItemRangeChanged(int positionStart, int itemCount) {
+          int adapterItemCount = adapter.getItemCount();
+          showEmptyView(adapterItemCount == 0);
+        }
+
+        @Override public void onItemRangeInserted(int positionStart, int itemCount) {
+          int adapterItemCount = adapter.getItemCount();
+          showEmptyView(adapterItemCount == 0);
+        }
+
+        @Override public void onItemRangeRemoved(int positionStart, int itemCount) {
+          int adapterItemCount = adapter.getItemCount();
+          showEmptyView(adapterItemCount == 0);
+        }
+      };
+
+  @OnClick(R.id.addList) void addList() {
+    new NewListDialog().show(getFragmentManager(), DIALOG_NEW_LIST);
   }
 
   @Override public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -102,17 +144,10 @@ public class ListsFragment extends Fragment implements LoaderManager.LoaderCallb
   }
 
   @Override public void onLoadFinished(Loader loader, Cursor data) {
-    if (adapter == null) {
-      adapter = new ListsAdapter(getActivity(), data);
-      listView.setAdapter(adapter);
-    } else {
-      adapter.changeCursor(data);
-    }
+    adapter.setCursor(data);
   }
 
   @Override public void onLoaderReset(Loader loader) {
-    if (adapter != null) {
-      adapter.changeCursor(null);
-    }
+    adapter.setCursor(null);
   }
 }

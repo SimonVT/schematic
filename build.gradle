@@ -23,7 +23,9 @@ ext.libraries = [
 
   javapoet: 'com.squareup:javapoet:1.7.0',
 
+  appcompat: 'com.android.support:appcompat-v7:26.0.1',
   supportv4: 'com.android.support:support-v4:26.0.1',
+  recyclerview: 'com.android.support:recyclerview-v7:26.0.1',
 
   butterknife: 'com.jakewharton:butterknife:8.4.0',
   butterknifeCompiler: 'com.jakewharton:butterknife-compiler:8.4.0',

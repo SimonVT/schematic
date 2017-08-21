@@ -18,46 +18,81 @@ package net.simonvt.schematic.sample.ui.adapter;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
 import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import net.simonvt.schematic.Cursors;
 import net.simonvt.schematic.sample.R;
 import net.simonvt.schematic.sample.database.ListColumns;
+import net.simonvt.schematic.sample.ui.fragment.ListsFragment;
 
-public class ListsAdapter extends CursorAdapter {
+public class ListsAdapter extends RecyclerView.Adapter<ListsAdapter.ViewHolder> {
 
   public static final String[] PROJECTION = new String[] {
       ListColumns.ID, ListColumns.TITLE, ListColumns.NOTES,
   };
 
-  public ListsAdapter(Context context, Cursor c) {
-    super(context, c, 0);
+  private Context context;
+  private ListsFragment.OnListSelectedListener listener;
+
+  private Cursor cursor;
+
+  public ListsAdapter(Context context, ListsFragment.OnListSelectedListener listener) {
+    this.context = context;
+    this.listener = listener;
+    setHasStableIds(true);
   }
 
-  @Override public View newView(Context context, Cursor cursor, ViewGroup parent) {
-    View v = LayoutInflater.from(context).inflate(R.layout.row_list, parent, false);
-    v.setTag(new ViewHolder(v));
-    return v;
+  public void setCursor(Cursor cursor) {
+    this.cursor = cursor;
+    notifyDataSetChanged();
   }
 
-  @Override public void bindView(View view, Context context, Cursor cursor) {
-    ViewHolder vh = (ViewHolder) view.getTag();
-    final String title = cursor.getString(cursor.getColumnIndex(ListColumns.TITLE));
-    vh.title.setText(title);
-    final int notes = cursor.getInt(cursor.getColumnIndex(ListColumns.NOTES));
-    vh.notes.setText(context.getString(R.string.x_notes, notes));
+  @Override public int getItemCount() {
+    if (cursor != null) {
+      return cursor.getCount();
+    }
+
+    return 0;
   }
 
-  static class ViewHolder {
+  @Override public long getItemId(int position) {
+    cursor.moveToPosition(position);
+    return Cursors.getLong(cursor, ListColumns.ID);
+  }
+
+  @Override public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.row_list, parent, false);
+    final ViewHolder holder = new ViewHolder(view);
+    view.setOnClickListener(new View.OnClickListener() {
+      @Override public void onClick(View view) {
+        if (holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
+          listener.onListSelected(holder.getItemId());
+        }
+      }
+    });
+    return holder;
+  }
+
+  @Override public void onBindViewHolder(ViewHolder holder, int position) {
+    cursor.moveToPosition(position);
+    final String title = Cursors.getString(cursor, ListColumns.TITLE);
+    holder.title.setText(title);
+    final int notes = Cursors.getInt(cursor, ListColumns.NOTES);
+    holder.notes.setText(context.getString(R.string.x_notes, notes));
+  }
+
+  static class ViewHolder extends RecyclerView.ViewHolder {
 
     @BindView(R.id.title) TextView title;
     @BindView(R.id.notes) TextView notes;
 
     ViewHolder(View view) {
+      super(view);
       ButterKnife.bind(this, view);
     }
   }

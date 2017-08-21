@@ -1,25 +1,10 @@
-/*
- * Copyright (C) 2017 Simon Vig Therkildsen
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package net.torrenttoise.util
 
 import android.app.Activity
 import android.app.Dialog
 import android.app.DialogFragment
 import android.app.Fragment
+import android.support.v7.widget.RecyclerView.ViewHolder
 import android.view.View
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
@@ -47,10 +32,8 @@ public fun <V : View> Fragment.bindView(id: Int)
 public fun <V : View> SupportFragment.bindView(id: Int)
     : ReadOnlyProperty<SupportFragment, V> = required(id, viewFinder)
 
-/**
 public fun <V : View> ViewHolder.bindView(id: Int)
     : ReadOnlyProperty<ViewHolder, V> = required(id, viewFinder)
-*/
 
 public fun <V : View> View.bindOptionalView(id: Int)
     : ReadOnlyProperty<View, V?> = optional(id, viewFinder)
@@ -73,10 +56,8 @@ public fun <V : View> Fragment.bindOptionalView(id: Int)
 public fun <V : View> SupportFragment.bindOptionalView(id: Int)
     : ReadOnlyProperty<SupportFragment, V?> = optional(id, viewFinder)
 
-/**
 public fun <V : View> ViewHolder.bindOptionalView(id: Int)
     : ReadOnlyProperty<ViewHolder, V?> = optional(id, viewFinder)
-*/
 
 public fun <V : View> View.bindViews(vararg ids: Int)
     : ReadOnlyProperty<View, List<V>> = required(ids, viewFinder)
@@ -99,10 +80,8 @@ public fun <V : View> Fragment.bindViews(vararg ids: Int)
 public fun <V : View> SupportFragment.bindViews(vararg ids: Int)
     : ReadOnlyProperty<SupportFragment, List<V>> = required(ids, viewFinder)
 
-/**
 public fun <V : View> ViewHolder.bindViews(vararg ids: Int)
     : ReadOnlyProperty<ViewHolder, List<V>> = required(ids, viewFinder)
-*/
 
 public fun <V : View> View.bindOptionalViews(vararg ids: Int)
     : ReadOnlyProperty<View, List<V>> = optional(ids, viewFinder)
@@ -125,10 +104,8 @@ public fun <V : View> Fragment.bindOptionalViews(vararg ids: Int)
 public fun <V : View> SupportFragment.bindOptionalViews(vararg ids: Int)
     : ReadOnlyProperty<SupportFragment, List<V>> = optional(ids, viewFinder)
 
-/**
 public fun <V : View> ViewHolder.bindOptionalViews(vararg ids: Int)
     : ReadOnlyProperty<ViewHolder, List<V>> = optional(ids, viewFinder)
-*/
 
 private val View.viewFinder: View.(Int) -> View?
   get() = { findViewById(it) }
@@ -144,10 +121,8 @@ private val Fragment.viewFinder: Fragment.(Int) -> View?
   get() = { view.findViewById(it) }
 private val SupportFragment.viewFinder: SupportFragment.(Int) -> View?
   get() = { view!!.findViewById(it) }
-/**
 private val ViewHolder.viewFinder: ViewHolder.(Int) -> View?
   get() = { itemView.findViewById(it) }
-*/
 
 private fun viewNotFound(id: Int, desc: KProperty<*>): Nothing =
     throw IllegalStateException("View ID $id for '${desc.name}' not found.")

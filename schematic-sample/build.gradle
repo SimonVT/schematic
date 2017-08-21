@@ -15,7 +15,8 @@ buildscript {
 dependencies {
   annotationProcessor project(':schematic-compiler')
   compile project(':schematic')
-  compile parent.libraries.supportv4
+  compile parent.libraries.appcompat
+  compile parent.libraries.recyclerview
   compile parent.libraries.butterknife
   annotationProcessor parent.libraries.butterknifeCompiler
 }
@@ -37,9 +38,9 @@ android {
     versionName = parent.ext.versionName
 
     buildConfigField "String", "PROVIDER_AUTHORITY",
-        "\"net.simonvt.schematic.sample.kotlin.provider.NotesProvider\""
+        "\"net.simonvt.schematic.sample.provider.NotesProvider\""
     resValue "string", "authority_provider",
-        "net.simonvt.schematic.sample.kotlin.provider.NotesProvider"
+        "net.simonvt.schematic.sample.provider.NotesProvider"
   }
 
   lintOptions {

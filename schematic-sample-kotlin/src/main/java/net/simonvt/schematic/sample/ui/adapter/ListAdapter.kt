@@ -16,36 +16,69 @@
 
 package net.simonvt.schematic.sample.ui.adapter
 
-import android.content.Context
 import android.database.Cursor
-import android.support.v4.widget.CursorAdapter
-import android.view.LayoutInflater
+import android.support.v7.widget.RecyclerView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import net.simonvt.schematic.Cursors
+import net.simonvt.schematic.sample.database.ListColumns
 import net.simonvt.schematic.sample.database.NoteColumns
 import net.simonvt.schematic.sample.kotlin.R
+import net.simonvt.schematic.sample.ui.fragment.ListFragment
+import net.simonvt.schematic.sample.util.inflate
+import net.torrenttoise.util.bindView
+import net.torrenttoise.util.getLong
+import net.torrenttoise.util.getString
 
-class ListAdapter(context: Context, c: Cursor) : CursorAdapter(context, c, 0) {
+class ListAdapter(private val listId: Long,
+    private val listener: ListFragment.OnNoteSelectedListener) :
+    RecyclerView.Adapter<ListAdapter.ViewHolder>() {
 
-  override fun newView(context: Context, cursor: Cursor, parent: ViewGroup): View {
-    val v = LayoutInflater.from(context).inflate(R.layout.row_note, parent, false)
-    v.tag = ViewHolder(v)
-    return v
+  private var _cursor: Cursor? = null
+  var cursor: Cursor?
+    get() = _cursor
+    set(value) {
+      _cursor = value
+      notifyDataSetChanged()
+    }
+
+  init {
+    setHasStableIds(true)
   }
 
-  override fun bindView(view: View, context: Context, cursor: Cursor) {
-    val vh = view.tag as ViewHolder
+  override fun getItemCount(): Int = cursor?.count ?: 0
+
+  override fun getItemId(position: Int): Long {
+    cursor!!.moveToPosition(position)
+    return cursor!!.getLong(ListColumns.ID)
+  }
+
+  override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    val view = parent.inflate(R.layout.row_note)
+    val holder = ViewHolder(view)
+    view.setOnClickListener {
+      if (holder.adapterPosition != RecyclerView.NO_POSITION) {
+        cursor!!.moveToPosition(holder.adapterPosition)
+        val note = cursor!!.getString(NoteColumns.NOTE)
+        val status = cursor!!.getString(NoteColumns.STATUS)
+        listener.onNoteSelected(listId, holder.itemId, note, status)
+      }
+    }
+    return holder
+  }
+
+  override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    cursor?.moveToPosition(position)
     val note = Cursors.getString(cursor, NoteColumns.NOTE)
-    vh.note.text = note
+    holder.note.text = note
     val status = Cursors.getString(cursor, NoteColumns.STATUS)
-    vh.status.text = status
+    holder.status.text = status
   }
 
-  class ViewHolder(view: View) {
+  class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
-    val note: TextView = view.findViewById(R.id.note)
-    val status: TextView = view.findViewById(R.id.statusText)
+    val note by bindView<TextView>(R.id.note)
+    val status by bindView<TextView>(R.id.statusText)
   }
 }
