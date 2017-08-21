@@ -3,6 +3,7 @@ apply plugin: 'checkstyle'
 
 buildscript {
   repositories {
+    google()
     jcenter()
   }
 
