@@ -174,6 +174,13 @@ public class ContentProviderWriter {
       String databaseSchematicName = this.database.getSimpleName().toString();
       String databaseSchematicPackage = this.database.getEnclosingElement().getSimpleName().toString();
       Database database = this.database.getAnnotation(Database.class);
+      if (database == null) {
+        error("Database class "
+            + this.database.toString()
+            + ", referenced from ContentProvider "
+            + provider.toString()
+            + ", is missing @Database annotation");
+      }
       String databaseName = database.className();
       String databasePackage = database.packageName();
 
