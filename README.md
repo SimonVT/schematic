@@ -22,7 +22,8 @@ public interface ListColumns {
 Then create a database that uses this column
 
 ```java
-@Database(version = NotesDatabase.VERSION)
+@Database(version = NotesDatabase.VERSION,
+  packageName = "net.simonvt.schematic.sample.provider")
 public final class NotesDatabase {
 
   public static final int VERSION = 1;
@@ -31,11 +32,12 @@ public final class NotesDatabase {
 }
 ```
 
-
-And finally define a ContentProvider
+Then define a ContentProvider
 
 ```java
-@ContentProvider(authority = NotesProvider.AUTHORITY, database = NotesDatabase.class)
+@ContentProvider(authority = NotesProvider.AUTHORITY, 
+  database = NotesDatabase.class,
+  packageName="net.simonvt.schematic.sample.provider")
 public final class NotesProvider {
 
   public static final String AUTHORITY = "net.simonvt.schematic.sample.NotesProvider";
@@ -48,6 +50,17 @@ public final class NotesProvider {
         defaultSort = ListColumns.TITLE + " ASC")
     public static final Uri LISTS = Uri.parse("content://" + AUTHORITY + "/lists");
   }
+```
+
+Then build the project to generate classes to a folder defined as `packageName` in annotations (or a `generated` subfolder by default).
+
+Finally define the generated ContentProvider in AndroidManifest.xml.
+
+```xml
+<provider
+    android:authorities="net.simonvt.schematic.sample.NotesProvider"
+    android:name="net.simonvt.schematic.sample.provider.NotesProvider"
+    android:exported="false"/>
 ```
 
 Table column annotations
