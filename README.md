@@ -100,6 +100,9 @@ dependencies {
 }
 ```
 
+Latest version is distributed through maven central, so 
+http://search.maven.org/#search%7Cga%7C1%7Cnet.simonvt.schematic.
+
 
 License
 =======
