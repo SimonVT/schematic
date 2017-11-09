@@ -16,12 +16,16 @@
 
 package net.simonvt.schematic.compiler;
 
+import net.simonvt.schematic.annotation.ContentProvider;
+import net.simonvt.schematic.annotation.Database;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -32,8 +36,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
-import net.simonvt.schematic.annotation.ContentProvider;
-import net.simonvt.schematic.annotation.Database;
 
 public class SchematicProcessor extends AbstractProcessor {
 
@@ -51,6 +53,8 @@ public class SchematicProcessor extends AbstractProcessor {
     elements = env.getElementUtils();
     types = env.getTypeUtils();
     filer = env.getFiler();
+
+    //
   }
 
   @Override public Set<String> getSupportedAnnotationTypes() {
