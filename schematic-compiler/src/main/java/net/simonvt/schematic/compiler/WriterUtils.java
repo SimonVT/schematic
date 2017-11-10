@@ -15,11 +15,11 @@ public final class WriterUtils {
     public static FieldSpec writeDescritionTable(String descriptionTableName) {
 
         String query = "\"CREATE TABLE IF NOT EXISTS " + descriptionTableName + " (\"+\n" +
-                "\" id_description INTEGER PRIMARY KEY AUTOINCREMENT,\"+ \n" +
-                "\" dv_version INTEGER NOT NULL, \"+\n" +
-                "\" table_name TEXT NOT NULL, \"+\n" +
-                "\" column_name TEXT NOT NULL, \"+\n" +
-                "\" column_type TEXT NOT NULL)\"";
+                "\" " + DbDescriptionInterface.ID_DESCRIPTION + " INTEGER PRIMARY KEY AUTOINCREMENT,\"+ \n" +
+                "\" " + DbDescriptionInterface.DB_VERSION + " INTEGER NOT NULL, \"+\n" +
+                "\" " + DbDescriptionInterface.TABLE_NAME + " TEXT NOT NULL, \"+\n" +
+                "\" " + DbDescriptionInterface.COLUMN_NAME + " TEXT NOT NULL, \"+\n" +
+                "\" " + DbDescriptionInterface.COLUMN_TYPE + " TEXT NOT NULL)\"";
 
         return FieldSpec.builder(String.class, descriptionTableName.toUpperCase())
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)

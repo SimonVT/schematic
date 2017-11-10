@@ -66,6 +66,8 @@ public class DatabaseWriter {
 
     List<VariableElement> execOnCreate = new ArrayList<>();
 
+    List<String> insertDescriptionLines = new ArrayList<>();
+
     ExecutableElement onCreate;
 
     ExecutableElement onUpgrade;
@@ -160,6 +162,7 @@ public class DatabaseWriter {
     }
 
     public void writeJava(Filer filer) throws IOException {
+
         JavaFileObject jfo = filer.createSourceFile(getFileName());
         Writer out = jfo.openWriter();
 
@@ -185,7 +188,13 @@ public class DatabaseWriter {
             ClassName tableClassName = ClassName.get(tableClass);
 
             TableWriter tableWriter = new TableWriter(processingEnv, table, tableClassName);
+
             tableWriter.createTable(databaseBuilder);
+
+            if (createDescriptionTable) {
+                insertDescriptionLines.addAll(tableWriter.createInsertDescription(this.version, this.descriptionTableName));
+            }
+
             tableWriter.createValuesBuilder(filer, outPackage);
         }
 
@@ -226,10 +235,6 @@ public class DatabaseWriter {
                 .addAnnotation(Override.class)
                 .addParameter(Clazz.SQLITE_DATABASE, "db");
 
-        if (createDescriptionTable) {
-            onCreateBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
-        }
-
         for (VariableElement table : tables) {
             onCreateBuilder.addStatement("db.execSQL($L)", table.getSimpleName().toString());
         }
@@ -237,6 +242,13 @@ public class DatabaseWriter {
         for (VariableElement exec : execOnCreate) {
             String variableName = exec.getSimpleName().toString();
             onCreateBuilder.addStatement("db.execSQL($T.$L)", exec.getEnclosingElement(), variableName);
+        }
+
+        if (createDescriptionTable) {
+            onCreateBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
+            for (String insert : this.insertDescriptionLines) {
+                onCreateBuilder.addStatement("db.execSQL($S)", insert);
+            }
         }
 
         if (onCreate != null) {
