@@ -18,6 +18,7 @@ package net.simonvt.schematic.sample.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+
 import net.simonvt.schematic.annotation.Database;
 import net.simonvt.schematic.annotation.ExecOnCreate;
 import net.simonvt.schematic.annotation.IfNotExists;
@@ -27,32 +28,42 @@ import net.simonvt.schematic.annotation.OnUpgrade;
 import net.simonvt.schematic.annotation.Table;
 
 @Database(version = NotesDatabase.VERSION,
-    packageName = "net.simonvt.schematic.sample.provider")
+        packageName = "net.simonvt.schematic.sample.provider",
+        createDescriptionTable = true)
 public final class NotesDatabase {
 
-  private NotesDatabase() {
-  }
+    private NotesDatabase() {
+    }
 
-  public static final int VERSION = 1;
+    public static final int VERSION = 1;
 
-  public static class Tables {
+    public static class Tables {
 
-    @Table(ListColumns.class) @IfNotExists public static final String LISTS = "lists";
+        @Table(ListColumns.class)
+        @IfNotExists
+        public static final String LISTS = "lists";
 
-    @Table(TagColumns.class) @IfNotExists public static final String NOTES_TAGS = "notes_tags";
-  }
+        @Table(TagColumns.class)
+        @IfNotExists
+        public static final String NOTES_TAGS = "notes_tags";
+    }
 
-  @Table(NoteColumns.class) public static final String NOTES = "notes";
+    @Table(NoteColumns.class)
+    public static final String NOTES = "notes";
 
-  @OnCreate public static void onCreate(Context context, SQLiteDatabase db) {
-  }
+    @OnCreate
+    public static void onCreate(Context context, SQLiteDatabase db) {
+    }
 
-  @OnUpgrade public static void onUpgrade(Context context, SQLiteDatabase db, int oldVersion,
-      int newVersion) {
-  }
+    @OnUpgrade
+    public static void onUpgrade(Context context, SQLiteDatabase db, int oldVersion,
+                                 int newVersion) {
+    }
 
-  @OnConfigure public static void onConfigure(SQLiteDatabase db) {
-  }
+    @OnConfigure
+    public static void onConfigure(SQLiteDatabase db) {
+    }
 
-  @ExecOnCreate public static final String EXEC_ON_CREATE = "SELECT * FROM " + NOTES;
+    @ExecOnCreate
+    public static final String EXEC_ON_CREATE = "SELECT * FROM " + NOTES;
 }
