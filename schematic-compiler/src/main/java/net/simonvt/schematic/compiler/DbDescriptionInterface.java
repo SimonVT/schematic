@@ -6,7 +6,7 @@ package net.simonvt.schematic.compiler;
 
 public interface DbDescriptionInterface {
     String ID_DESCRIPTION = "id_description";
-    String DB_VERSION = "dv_version";
+    String DB_VERSION = "db_version";
     String TABLE_NAME = "table_name";
     String COLUMN_NAME = "column_name";
     String COLUMN_TYPE = "column_type";

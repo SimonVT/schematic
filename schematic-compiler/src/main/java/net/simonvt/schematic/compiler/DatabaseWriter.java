@@ -239,16 +239,26 @@ public class DatabaseWriter {
             onCreateBuilder.addStatement("db.execSQL($L)", table.getSimpleName().toString());
         }
 
-        for (VariableElement exec : execOnCreate) {
-            String variableName = exec.getSimpleName().toString();
-            onCreateBuilder.addStatement("db.execSQL($T.$L)", exec.getEnclosingElement(), variableName);
-        }
-
         if (createDescriptionTable) {
+            StringBuilder deleteDbDescription = new StringBuilder();
+            deleteDbDescription.append("\"DELETE FROM ")
+                    .append(this.descriptionTableName)
+                    .append(" WHERE ")
+                    .append(DbDescriptionInterface.DB_VERSION)
+                    .append("=")
+                    .append(version)
+                    .append("\"");
+
+            onCreateBuilder.addStatement("db.execSQL($L)", deleteDbDescription.toString());
             onCreateBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
             for (String insert : this.insertDescriptionLines) {
                 onCreateBuilder.addStatement("db.execSQL($S)", insert);
             }
+        }
+
+        for (VariableElement exec : execOnCreate) {
+            String variableName = exec.getSimpleName().toString();
+            onCreateBuilder.addStatement("db.execSQL($T.$L)", exec.getEnclosingElement(), variableName);
         }
 
         if (onCreate != null) {
