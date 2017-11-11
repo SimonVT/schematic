@@ -1,4 +1,4 @@
-[![Release](https://jitpack.io/olivejp/schematic.svg)]
+[![Release](https://jitpack.io/v/olivejp/schematic.svg)]
 (https://jitpack.io/#olivejp/schematic)
 
 Schematic
