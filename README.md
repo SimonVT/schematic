@@ -1,3 +1,6 @@
+[![Release](https://jitpack.io/olivejp/schematic.svg)]
+(https://jitpack.io/#olivejp/schematic)
+
 Schematic
 =========
 
