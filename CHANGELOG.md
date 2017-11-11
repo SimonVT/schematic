@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 0.7.2
+-------------
+ - Add new attributes `createDescriptionTable` and `descriptionTableName` to `@Database` annotation.
+ -`createDescriptionTable` is a boolean wich allow to create a new table wich contains the db description. Default is false.
+ -`descriptionTableName` is the name of the db description table. Default is "db_description". 
+
+
 Version 0.7.0
 -------------
  - Breaking change: Multiple `@PrimaryKey` annotations on same table is no longer allowed.
