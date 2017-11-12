@@ -257,8 +257,8 @@ public class DatabaseWriter {
                 .addModifiers(Modifier.PRIVATE)
                 .addParameter(Clazz.SQLITE_DATABASE, "db");
 
-        insertDescriptionsBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
         insertDescriptionsBuilder.addStatement("db.execSQL($L)", deleteDbDescription);
+        insertDescriptionsBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
 
         for (String insert : this.insertDescriptionLines) {
             insertDescriptionsBuilder.addStatement("db.execSQL($S)", insert);
