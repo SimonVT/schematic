@@ -45,4 +45,8 @@ public @interface Database {
   String packageName() default "";
 
   int version();
+
+  boolean createDescriptionTable() default false;
+
+  String descriptionTableName() default "db_description";
 }
