@@ -82,6 +82,8 @@ public class DatabaseWriter {
 
     String descriptionTableName;
 
+    private StringBuilder deleteDbDescription;
+
     public DatabaseWriter(ProcessingEnvironment env, Elements elements, Element database) {
         this.processingEnv = env;
         this.elementUtils = env.getElementUtils();
@@ -94,6 +96,14 @@ public class DatabaseWriter {
         this.version = db.version();
         this.createDescriptionTable = db.createDescriptionTable();
         this.descriptionTableName = db.descriptionTableName();
+        this.deleteDbDescription = new StringBuilder()
+                .append("\"DELETE FROM ")
+                .append(this.descriptionTableName)
+                .append(" WHERE ")
+                .append(DbDescriptionInterface.DB_VERSION)
+                .append("=")
+                .append(this.version)
+                .append("\"");
 
         this.className = db.className();
         if (className.trim().isEmpty()) {
@@ -215,6 +225,12 @@ public class DatabaseWriter {
                 .build();
         databaseBuilder.addMethod(constructor);
 
+        // JPO - Add method to initialize the description table
+        if (createDescriptionTable) {
+            MethodSpec methodSpec = getInsertDescription();
+            databaseBuilder.addMethod(methodSpec);
+        }
+
         databaseBuilder.addMethod(getOnCreateSpec());
         databaseBuilder.addMethod(getOnUpgradeSpec());
 
@@ -228,6 +244,29 @@ public class DatabaseWriter {
         out.close();
     }
 
+    /**
+     * Return the MethodSpec which includes the db.execSQL to :
+     * -Create description table if not exist.
+     * -Delete all records in the previous description table for the current version.
+     * -Insert all the records for the actual database.
+     * @return methodSpec to include as a new method in the onCreate or onUpgrade.
+     */
+    private MethodSpec getInsertDescription() {
+        MethodSpec.Builder insertDescriptionsBuilder = MethodSpec.methodBuilder("insertDescriptions")
+                .returns(void.class)
+                .addModifiers(Modifier.PRIVATE)
+                .addParameter(Clazz.SQLITE_DATABASE, "db");
+
+        insertDescriptionsBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
+        insertDescriptionsBuilder.addStatement("db.execSQL($L)", deleteDbDescription);
+
+        for (String insert : this.insertDescriptionLines) {
+            insertDescriptionsBuilder.addStatement("db.execSQL($S)", insert);
+        }
+
+        return insertDescriptionsBuilder.build();
+    }
+
     private MethodSpec getOnCreateSpec() {
         MethodSpec.Builder onCreateBuilder = MethodSpec.methodBuilder("onCreate")
                 .returns(void.class)
@@ -239,21 +278,9 @@ public class DatabaseWriter {
             onCreateBuilder.addStatement("db.execSQL($L)", table.getSimpleName().toString());
         }
 
+        // In the onCreate we delete the preview
         if (createDescriptionTable) {
-            StringBuilder deleteDbDescription = new StringBuilder();
-            deleteDbDescription.append("\"DELETE FROM ")
-                    .append(this.descriptionTableName)
-                    .append(" WHERE ")
-                    .append(DbDescriptionInterface.DB_VERSION)
-                    .append("=")
-                    .append(version)
-                    .append("\"");
-
-            onCreateBuilder.addStatement("db.execSQL($L)", deleteDbDescription.toString());
-            onCreateBuilder.addStatement("db.execSQL($L)", this.descriptionTableName.toUpperCase());
-            for (String insert : this.insertDescriptionLines) {
-                onCreateBuilder.addStatement("db.execSQL($S)", insert);
-            }
+            onCreateBuilder.addStatement("insertDescriptions(db)");
         }
 
         for (VariableElement exec : execOnCreate) {
