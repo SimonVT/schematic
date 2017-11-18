@@ -6,6 +6,7 @@ import net.simonvt.schematic.annotation.DataType;
 import net.simonvt.schematic.annotation.DataType.Type;
 import net.simonvt.schematic.annotation.NotNull;
 import net.simonvt.schematic.annotation.PrimaryKey;
+import net.simonvt.schematic.annotation.ForeignKeyAction;
 import net.simonvt.schematic.annotation.References;
 import net.simonvt.schematic.annotation.UniqueConstraint;
 
@@ -25,7 +26,8 @@ public interface TagColumns {
 
   @DataType(Type.INTEGER)
   @NotNull
-  @References(table = NotesDatabase.NOTES, column = NoteColumns.ID)
+  @References(table = NotesDatabase.NOTES, column = NoteColumns.ID,
+          onDelete = ForeignKeyAction.CASCADE)
   String NOTE_ID = "note_id";
 
   @DataType(Type.TEXT)

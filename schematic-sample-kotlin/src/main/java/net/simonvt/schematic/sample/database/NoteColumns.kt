@@ -16,13 +16,9 @@
 
 package net.simonvt.schematic.sample.database
 
-import net.simonvt.schematic.annotation.AutoIncrement
-import net.simonvt.schematic.annotation.Check
-import net.simonvt.schematic.annotation.DataType
+import net.simonvt.schematic.annotation.*
 import net.simonvt.schematic.annotation.DataType.Type.INTEGER
 import net.simonvt.schematic.annotation.DataType.Type.TEXT
-import net.simonvt.schematic.annotation.PrimaryKey
-import net.simonvt.schematic.annotation.References
 import net.simonvt.schematic.sample.database.NotesDatabase.Tables
 
 interface NoteColumns {
@@ -32,7 +28,8 @@ interface NoteColumns {
 
     @DataType(INTEGER) @PrimaryKey @AutoIncrement const val ID = "_id"
 
-    @DataType(INTEGER) @References(table = Tables.LISTS, column = ListColumns.ID)
+    @DataType(INTEGER) @References(table = Tables.LISTS, column = ListColumns.ID,
+            onDelete = ForeignKeyAction.CASCADE)
     const val LIST_ID = "listId"
 
     @DataType(TEXT) const val NOTE = "note"

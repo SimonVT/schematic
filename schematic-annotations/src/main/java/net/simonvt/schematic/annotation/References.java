@@ -34,4 +34,8 @@ public @interface References {
   String table();
 
   String column();
+
+  ForeignKeyAction onDelete() default ForeignKeyAction.NONE;
+
+  ForeignKeyAction onUpdate() default ForeignKeyAction.NONE;
 }

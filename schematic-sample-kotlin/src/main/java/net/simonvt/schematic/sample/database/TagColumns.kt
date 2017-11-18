@@ -1,14 +1,8 @@
 package net.simonvt.schematic.sample.database
 
-import net.simonvt.schematic.annotation.AutoIncrement
+import net.simonvt.schematic.annotation.*
 import net.simonvt.schematic.annotation.ConflictResolutionType.REPLACE
-import net.simonvt.schematic.annotation.Constraints
-import net.simonvt.schematic.annotation.DataType
 import net.simonvt.schematic.annotation.DataType.Type
-import net.simonvt.schematic.annotation.NotNull
-import net.simonvt.schematic.annotation.PrimaryKey
-import net.simonvt.schematic.annotation.References
-import net.simonvt.schematic.annotation.UniqueConstraint
 
 @Constraints(
     unique = arrayOf(
@@ -24,7 +18,8 @@ interface TagColumns {
     @DataType(Type.INTEGER) @PrimaryKey @AutoIncrement const val ID = "_id"
 
     @DataType(Type.INTEGER) @NotNull
-    @References(table = NotesDatabase.NOTES, column = NoteColumns.ID)
+    @References(table = NotesDatabase.NOTES, column = NoteColumns.ID,
+            onDelete = ForeignKeyAction.CASCADE)
     const val NOTE_ID = "note_id"
 
     @DataType(Type.TEXT) @NotNull
