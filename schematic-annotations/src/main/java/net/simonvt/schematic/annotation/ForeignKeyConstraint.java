@@ -21,9 +21,8 @@ public @interface ForeignKeyConstraint {
     /** Column names in referenced table */
     String[] referencedColumns();
 
-    /**
-     * Defines conflict resolution algorithm.
-     * By default {@link ConflictResolutionType#NONE} is used.
-     * */
-    ConflictResolutionType onConflict() default ConflictResolutionType.NONE;
+
+    ForeignKeyAction onDelete() default ForeignKeyAction.NONE;
+
+    ForeignKeyAction onUpdate() default ForeignKeyAction.NONE;
 }

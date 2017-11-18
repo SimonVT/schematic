@@ -22,12 +22,31 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
+
+import net.simonvt.schematic.annotation.AutoIncrement;
+import net.simonvt.schematic.annotation.Check;
+import net.simonvt.schematic.annotation.ConflictResolutionType;
+import net.simonvt.schematic.annotation.Constraints;
+import net.simonvt.schematic.annotation.DataType;
+import net.simonvt.schematic.annotation.DefaultValue;
+import net.simonvt.schematic.annotation.ForeignKeyAction;
+import net.simonvt.schematic.annotation.ForeignKeyConstraint;
+import net.simonvt.schematic.annotation.IfNotExists;
+import net.simonvt.schematic.annotation.NotNull;
+import net.simonvt.schematic.annotation.PrimaryKey;
+import net.simonvt.schematic.annotation.PrimaryKeyConstraint;
+import net.simonvt.schematic.annotation.References;
+import net.simonvt.schematic.annotation.Table;
+import net.simonvt.schematic.annotation.Unique;
+import net.simonvt.schematic.annotation.UniqueConstraint;
+
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
@@ -38,21 +57,6 @@ import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
-import net.simonvt.schematic.annotation.AutoIncrement;
-import net.simonvt.schematic.annotation.Check;
-import net.simonvt.schematic.annotation.ConflictResolutionType;
-import net.simonvt.schematic.annotation.Constraints;
-import net.simonvt.schematic.annotation.DataType;
-import net.simonvt.schematic.annotation.DefaultValue;
-import net.simonvt.schematic.annotation.ForeignKeyConstraint;
-import net.simonvt.schematic.annotation.IfNotExists;
-import net.simonvt.schematic.annotation.NotNull;
-import net.simonvt.schematic.annotation.PrimaryKey;
-import net.simonvt.schematic.annotation.PrimaryKeyConstraint;
-import net.simonvt.schematic.annotation.References;
-import net.simonvt.schematic.annotation.Table;
-import net.simonvt.schematic.annotation.Unique;
-import net.simonvt.schematic.annotation.UniqueConstraint;
 
 public class TableWriter {
 
@@ -251,6 +255,14 @@ public class TableWriter {
             .append("(")
             .append(references.column())
             .append(")");
+        if(references.onUpdate() != ForeignKeyAction.NONE) {
+          query.append(" ").append("ON UPDATE").append(" ");
+          writeOnActions(query, references.onUpdate());
+        }
+        if(references.onDelete() != ForeignKeyAction.NONE) {
+          query.append(" ").append("ON DELETE").append(" ");
+          writeOnActions(query, references.onDelete());
+        }
       }
     }
 
@@ -310,7 +322,14 @@ public class TableWriter {
       query.append(foreignKey.referencedColumns()[i]);
     }
     query.append(')');
-
+    if(foreignKey.onUpdate() != ForeignKeyAction.NONE) {
+      query.append(" ").append("ON UPDATE").append(" ");
+      writeOnActions(query, foreignKey.onUpdate());
+    }
+    if(foreignKey.onDelete() != ForeignKeyAction.NONE) {
+      query.append(" ").append("ON DELETE").append(" ");
+      writeOnActions(query, foreignKey.onDelete());
+    }
   }
 
   private static void writePrimaryOrUniqueConstraint(
@@ -377,6 +396,28 @@ public class TableWriter {
           query.append("REPLACE");
           break;
       }
+    }
+  }
+
+  private static void writeOnActions(StringBuilder query,
+      ForeignKeyAction foreignKeyAction) {
+    switch (foreignKeyAction) {
+      case RESTRICT:
+        query.append("RESTRICT");
+        break;
+      case SET_NULL:
+        query.append("SET NULL");
+        break;
+      case SET_DEFAULT:
+        query.append("SET DEFAULT");
+        break;
+      case CASCADE:
+        query.append("CASCADE");
+        break;
+      case NO_ACTION:
+      default:
+        query.append("NO ACTION");
+        break;
     }
   }
 
