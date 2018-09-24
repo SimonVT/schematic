@@ -1,1 +1,1 @@
-include 'schematic', 'schematic-compiler', 'schematic-annotations', 'schematic-samples'
+include 'schematic', 'schematic-compiler', 'schematic-annotations', 'schematic-sample', 'schematic-sample-kotlin'

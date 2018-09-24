@@ -1,4 +1,4 @@
-apply plugin: 'com.android.library'
+apply plugin: 'com.android.application'
 apply plugin: 'checkstyle'
 
 buildscript {
@@ -13,8 +13,12 @@ buildscript {
 }
 
 dependencies {
-  compile project(':schematic-annotations')
-  provided parent.libraries.jsr305
+  annotationProcessor project(':schematic-compiler')
+  compile project(':schematic')
+  compile parent.libraries.appcompat
+  compile parent.libraries.recyclerview
+  compile parent.libraries.butterknife
+  annotationProcessor parent.libraries.butterknifeCompiler
 }
 
 android {
@@ -32,6 +36,15 @@ android {
 
     versionCode = parent.ext.versionCode;
     versionName = parent.ext.versionName
+
+    buildConfigField "String", "PROVIDER_AUTHORITY",
+        "\"net.simonvt.schematic.sample.provider.NotesProvider\""
+    resValue "string", "authority_provider",
+        "net.simonvt.schematic.sample.provider.NotesProvider"
+  }
+
+  lintOptions {
+    abortOnError false
   }
 
   packagingOptions {
@@ -44,7 +57,7 @@ checkstyle {
   showViolations true
 }
 
-android.libraryVariants.all { variant ->
+android.applicationVariants.all { variant ->
   def name = variant.buildType.name
 
   def checkstyle = project.tasks.create "checkstyle${name.capitalize()}", Checkstyle
@@ -56,4 +69,8 @@ android.libraryVariants.all { variant ->
   project.tasks.getByName("check").dependsOn checkstyle
 }
 
-apply from: rootProject.file('gradle/gradle-mvn-push.gradle')
+// Workaround because compiler and sample is in the same gradle project.
+// DO NOT USE WHEN PULLING FROM MAVEN REPO
+android.applicationVariants.all { variant ->
+  variant.javaCompile.dependsOn ':schematic-compiler:jar'
+}
