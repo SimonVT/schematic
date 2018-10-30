@@ -96,7 +96,7 @@ Including in your project
 ```groovy
 dependencies {
   annotationProcessor 'net.simonvt.schematic:schematic-compiler:{latest-version}'
-  compile 'net.simonvt.schematic:schematic:{latest-version}'
+  api 'net.simonvt.schematic:schematic:{latest-version}'
 }
 ```
 
